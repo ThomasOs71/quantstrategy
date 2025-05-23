@@ -10,11 +10,9 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
-from matplotlib.ticker import PercentFormatter
-from sklearn.covariance import LedoitWolf, GraphicalLassoCV, GraphicalLasso, MinCovDet, EllipticEnvelope
+from sklearn.covariance import LedoitWolf, GraphicalLassoCV, GraphicalLasso, EllipticEnvelope
 from statsmodels.multivariate.factor import Factor
 from matplotlib.patches import Ellipse
-import scipy.stats as ss
 
 # %% Functoins
 def denoise_corr_mp(returns: pd.DataFrame) -> pd.DataFrame:
@@ -190,6 +188,11 @@ index_logret = (np.log(closing_prices_index) - np.log(closing_prices_index.shift
 index_logret_ = index_logret.values
 
 
+# %% Ledoit - Wolf Example
+
+
+
+
 # %% Graph: Eigenvalues
 ## Eigenvalues of Covariance and Inverted Covariance
 number_of_asset_included = 8
@@ -233,6 +236,9 @@ plt.show()
 mean = np.array([0, 0])
 cov = np.array([[3, 1],
                 [1, 2]])
+
+corr = cov2corr(cov)
+
 # Simulate sample data
 np.random.seed(0)
 data = np.random.multivariate_normal(mean, cov, size=100)
@@ -245,16 +251,21 @@ data_dirty = np.r_[data,outlier]
 mean_est_outlier = np.mean(data_dirty, axis=0)
 cov_est_outlier = np.cov(data_dirty.T)
 
+corr_est_outlier = cov2corr(cov_est_outlier)
+
 # Plot data and covariance ellipses
 fig, ax = plt.subplots(figsize=(8, 6))
 ax.scatter(data[:, 0], data[:, 1], s=10, alpha=0.6, label='Data')
 ax.scatter(outlier[:, 0], outlier[:, 1], s=20, alpha=0.6, color = "red",
             label='Data')
 
-plot_covariance_ellipse(mean_est, cov_est, n_std=1.0, ax=ax,
-                    edgecolor='red', lw=2, fill=False, label='1σ ellipse')
+plot_covariance_ellipse(mean, cov, n_std=1.0, ax=ax,
+                    edgecolor='red', lw=2, fill=False, label='True Covariance')
 plot_covariance_ellipse(mean_est_outlier, cov_est_outlier, n_std=1.0, ax=ax,
-                    edgecolor='blue', lw=2, fill=False, label='1σ ellipse')
+                    edgecolor='blue', lw=2, fill=False, label='Estimated Covariance')
+ax.annotate(text = f"True Correlation: {np.round(corr[0,1],2)}",xy = (2,-2))
+ax.annotate(text = f"Estimated Correlation: {np.round(corr_est_outlier[0,1],2)}",xy = (2,-2.5))
+
 ax.set_title("Impact of Few Outlier on the Covariance Matrix")
 ax.legend()
 plt.show()
@@ -298,7 +309,6 @@ plt.show()
 
 
 # %% Graph: Spectral Denoising
-
 # Spectral
 spectral_corr = denoise_corr_mp(equity_logret)
 value_sc, vector_sc = np.linalg.eigh(spectral_corr)
@@ -319,7 +329,7 @@ ax1.set_title("Sample Covariance vs. Spectral Denoising: Comparision of Eigenval
 ax1.annotate(xy = (10,2.5), text=f"Minimum Eigenvalue in Sample Correlation: {np.round(np.min(value_sample),2)}",)
 ax1.annotate(xy = (10,2), text=f"Cond. Number in Sample Correlation: {np.round(np.linalg.cond(sample_corr),2)}",)
 ax1.annotate(xy = (10,1.5), text=f"Minimum Eigenvalue in Spectral Denoising: {np.round(np.min(value_sc),2)}",)
-ax1.annotate(xy = (10,1), text=f"Cond. Number in Sample Correlation: {np.round(np.linalg.cond(spectral_corr),2)}",)
+ax1.annotate(xy = (10,1), text=f"Cond. Number after Spectral Denoising: {np.round(np.linalg.cond(spectral_corr),2)}",)
 ax1.legend()
 plt.show()
 
@@ -358,13 +368,15 @@ equity_robust_corr = ee.covariance_
 equity_robust_corr = cov2corr(equity_robust_corr)
 equity_robust_cov_indirect = np.diag(np.sqrt(np.diag(equity_sample_cov))) @ equity_robust_corr @ np.diag(np.sqrt(np.diag(equity_sample_cov)))
 
+# Condition Numbers remain high: Better Combination with Additional Shrinkage (here: Glasso)
 '''
-Condition Numbers remain high: Better Combination with Additional Shrinkage (here: Glasso)
-glasso_cov_estimator = GraphicalLasso(alpha=0.1,
-                            covariance = "precomputed").fit(ee.covariance_)
-np.linalg.cond(glasso_cov_estimator .covariance_)
+Example of "Combination" of Approaches
+'''
+glasso_cov_estimator = GraphicalLasso(alpha=0.02,
+                                      covariance = "precomputed").fit(equity_robust_corr)
+equity_robust_glasso_corr = glasso_cov_estimator.covariance_
+equity_robust_glasso_cov = np.diag(np.sqrt(np.diag(equity_sample_cov))) @ equity_robust_glasso_corr @ np.diag(np.sqrt(np.diag(equity_sample_cov)))
 
-'''
 
 ### Ledoit-Wolf
 ## Shrinkage of whole Covariance
@@ -432,26 +444,256 @@ index_sample_cov = np.cov(index_logret_.T)
 index_sample_corr = cov2corr(index_sample_cov)
 
 ### Exponentionall-Weighted Sample Covariance
-time_filter_cov = exp_time_filter(equity_logret.shape[0], 100)
-equity_exp_cov = np.cov(equity_logret.T,aweights = time_filter_cov)
-equity_exp_corr = cov2corr(equity_exp_cov)
+time_filter_cov = exp_time_filter(index_logret_.shape[0], 100)
+index_exp_cov = np.cov(index_logret.T,aweights = time_filter_cov)
+index_exp_corr = cov2corr(equity_exp_cov)
+
+### EllipticEnvelope (Robust Estimation)
+# Direct Estimation of Covariance
+ee = EllipticEnvelope(contamination=0.05, support_fraction=None, random_state=0)
+ee.fit(index_logret_)
+index_robust_cov = ee.covariance_
+labels = ee.predict(index_logret_)      # 1 = Inlier, -1 = Outlier
+dist2_ee = ee.mahalanobis(index_logret_)  # quadr. Distanzen
+offset = ee.offset_                       # Schwellenwert
+
+# Estimation of Correlation - subsequent combination with Volatilites
+ee = EllipticEnvelope(contamination=0.05, support_fraction=None, random_state=0)
+ee.fit((index_logret - index_logret.mean()) / index_logret.std())
+index_robust_corr = ee.covariance_
+index_robust_corr = cov2corr(index_robust_corr)
+index_robust_cov_indirect = np.diag(np.sqrt(np.diag(index_sample_cov))) @ index_robust_corr @ np.diag(np.sqrt(np.diag(index_sample_cov)))
+
+# Condition Numbers remain high: Better Combination with Additional Shrinkage (here: Glasso)
+'''
+Example of "Combination" of Approaches
+'''
+glasso_cov_estimator = GraphicalLasso(alpha=0.02,
+                                      covariance = "precomputed").fit(index_robust_corr)
+index_robust_glasso_corr = glasso_cov_estimator.covariance_
+index_robust_glasso_cov = np.diag(np.sqrt(np.diag(index_sample_cov))) @ index_robust_glasso_corr @ np.diag(np.sqrt(np.diag(index_sample_cov)))
+
+### Ledoit-Wolf
+## Shrinkage of whole Covariance
+index_lw_cov_direct = LedoitWolf().fit(index_logret).covariance_
+
+## Shrinkage of Correlation 
+index_return_standardized = (index_logret - index_logret.mean()) / index_logret.std()
+# Combine Shrinked Correlation with Volatilies
+index_lw_corr = LedoitWolf().fit(index_return_standardized).covariance_ 
+index_lw_corr = np.diag(1/np.sqrt(np.diag(index_lw_corr)))@index_lw_corr@np.diag(1/np.sqrt(np.diag(index_lw_corr)))
+index_lw_cov_indirect = np.diag(np.sqrt(np.diag(index_sample_cov))) @ index_lw_corr @ np.diag(np.sqrt(np.diag(index_sample_cov)))
+
+### GraphicalLasso
+## Estimation of Covariance
+glasso_cov_estimator = GraphicalLasso(alpha=0.0002,
+                            covariance = "precomputed").fit(index_sample_cov)
+index_glasso_cov = glasso_cov_estimator.covariance_
+'''
+Glasso directly on the covariance can make issues...better use on correlation...
+'''
+
+## Estimation of Correlation
+alphas = np.logspace(-1.5, 1, num=10)
+edge_model = GraphicalLassoCV(alphas=alphas)
+X = index_logret.copy()
+X /= X.std(axis=0)
+edge_model.fit(X)
+index_glasso_corr = edge_model.covariance_
+index_glasso_corr = np.diag(1/np.sqrt(np.diag(edge_model.covariance_)))@index_glasso_corr@np.diag(1/np.sqrt(np.diag(edge_model.covariance_)))
+# Combine with Volatility Estimate
+index_glasso_cov_indirect = np.diag(np.sqrt(np.diag(index_sample_cov))) @ index_glasso_corr @ np.diag(np.sqrt(np.diag(index_sample_cov)))
+
+### Spectral Denosing
+index_spectral_corr = denoise_corr_mp(index_logret).values
+index_spectral_cov = np.diag(np.sqrt(np.diag(index_sample_cov))) @ index_spectral_corr @ np.diag(np.sqrt(np.diag(index_sample_cov)))
+
+### Factor Model
+'''
+Estimates a Hidden Factor Model on the Correlation.
+Afterwards, the volatilities are added to obtain the covariance
+
+'''
+# Factor Model for Correlation Estimatio
+vola = np.sqrt(np.diag(index_sample_cov))
+factor_model = Factor(n_factor=3, 
+                      corr = index_sample_corr, 
+                      method='pa', 
+                      smc=True).fit()  # PAF fitted model
+
+beta = factor_model.loadings  # loadings
+delta = factor_model.uniqueness  # variances
+index_factor_corr = beta@beta.T + np.diagflat(delta)
+
+# Adjust to obtain Covariance
+beta = np.diag(vola)@beta  # re-scaled loadings (Correlation -> Covariance)
+delta = vola**2*delta  # re-scaled variances -> (Correlation -> Covariance)
+index_factor_cov = beta@beta.T + np.diagflat(delta)  # PAF factor analysis covariance matrix
+
+index_sample_corr
 
 
 
 
+# %% EQUITY - Comparision of Results
+### Condition Numbers
+equity_cov_estimators = [equity_sample_cov,              #  
+                            equity_exp_cov,                 # 
+                            equity_robust_cov,              #
+                            equity_robust_cov_indirect,     #
+                            equity_robust_glasso_cov,       # Robust Estimation + Glasse
+                            equity_lw_cov_direct,           # Ledoit-Wolf
+                            equity_lw_cov_indirect,         # Ledoit-Wolf - Via Correlation
+                            equity_glasso_cov,              # Glasso Covariance Direct
+                            equity_glasso_cov_indirect,     #
+                            equity_spectral_cov,            #
+                            equity_factor_cov]              #                            
+                            
+equity_condition_number = [np.linalg.cond(i) for i in equity_cov_estimators]
+
+equity_condition_numbers_df = pd.Series(equity_condition_number,
+                                        index = ["Sample Covariance",
+                                                 "Flexible Probability Appproach",
+                                                 "Robust Estimation (direct Estimation)",
+                                                 "Robust Estimation (via Correation)",
+                                                 "Robust Estimation + Glasso",
+                                                 "Ledoit-Wolf (direct Estimation)",
+                                                 "Ledoit-Wolf (via Correlation)",
+                                                 "Glasso Estimation (direct Estimation)",
+                                                 "Glasso Estimation (via Correlation)",
+                                                 "Spectral Denoising",
+                                                 "Hidden Factor Approach"],
+                                        name = "Condition Numbers of various Estimators")
+
+
+fig, ax = plt.subplots()
+# Create horizontal bar chart
+ax.barh(
+    ["       " + str(i[0]) + " " + str(i[1]) for i in enumerate(equity_condition_numbers_df.index)][::-1],
+    equity_condition_numbers_df[::-1],
+    color = "lightgreen")
+
+# Set title
+ax.set_title("Equity: Covariance Estimator and Number of Conditions", ha='center')
+
+# Left-align y-tick labels
+ax.tick_params(axis='y', pad=10)  # Add padding so labels don't overlap bars
+for label in ax.get_yticklabels():
+    label.set_horizontalalignment('left')
+    label.set_color('black')  # 🔴 Set text color to red
+plt.show()
 
 
 
-# %% Comparision of Results - Equity
-### Condition NUmbers
-np.linalg.cond(equity_sample_cov)
-np.linalg.cond(equity_exp_cov)
-np.linalg.cond(equity_lw_cov_direct)
-np.linalg.cond(equity_lw_cov_indirect)
-np.linalg.cond(equity_glasso_cov)
-np.linalg.cond(equity_glasso_cov_indirect)
-np.linalg.cond(equity_spectral_cov)
-np.linalg.cond(equity_factor_cov)
+
+### Equity - Frobenius Norms
+equity_rel_frob = np.zeros([11,11])
+
+for i in enumerate(equity_condition_numbers_df.index):
+    for j in enumerate(equity_condition_numbers_df.index):
+        equity_rel_frob[i[0],j[0]] = np.linalg.norm(equity_cov_estimators[i[0]] - equity_cov_estimators[j[0]],ord="fro")
+
+
+# Plot
+fig, ax = plt.subplots(figsize=(8, 8))  # Adjust size as needed
+cax = ax.imshow(equity_rel_frob, cmap='coolwarm')
+
+# Annotate cells with values
+for i in range(equity_rel_frob.shape[0]):
+    for j in range(equity_rel_frob.shape[1]):
+        ax.text(j, i, f'{equity_rel_frob[i, j]:.2f}',
+                ha='center', va='center', color='black')
+
+# Optional: Add colorbar and remove ticks
+fig.colorbar(cax, ax=ax, label='Frobenius Norm')
+ax.set_xticks([i for i in range(0,11)])
+ax.set_yticks([i for i in range(0,11)])
+ax.set_title('Equity - Frobenius Norms Heatmap',size = 20)
+plt.legend(list(equity_condition_numbers_df.index))
+plt.tight_layout()
+plt.show()
+
+
+
+# %% ASSET CLASS INDEX - Comparision of Results 
+### Condition Numbers
+index_cov_estimators = [index_sample_cov,              #  
+                            index_exp_cov,                 # 
+                            index_robust_cov,              #
+                            index_robust_cov_indirect,     #
+                            index_robust_glasso_cov,       # Robust Estimation + Glasse
+                            index_lw_cov_direct,           # Ledoit-Wolf
+                            index_lw_cov_indirect,         # Ledoit-Wolf - Via Correlation
+                            index_glasso_cov,              # Glasso Covariance Direct
+                            index_glasso_cov_indirect,     #
+                            index_spectral_cov,            #
+                            index_factor_cov]              #                            
+                            
+index_condition_number = [np.linalg.cond(i) for i in index_cov_estimators]
+
+index_condition_numbers_df = pd.Series(index_condition_number,
+                                        index = ["Sample Covariance",
+                                                 "Flexible Probability Appproach",
+                                                 "Robust Estimation (direct Estimation)",
+                                                 "Robust Estimation (via Correation)",
+                                                 "Robust Estimation + Glasso",
+                                                 "Ledoit-Wolf (direct Estimation)",
+                                                 "Ledoit-Wolf (via Correlation)",
+                                                 "Glasso Estimation (direct Estimation)",
+                                                 "Glasso Estimation (via Correlation)",
+                                                 "Spectral Denoising",
+                                                 "Hidden Factor Approach"],
+                                        name = "Condition Numbers of various Estimators")
+
+
+fig, ax = plt.subplots()
+# Create horizontal bar chart
+ax.barh(
+    ["       " + str(i[0]) + " " + str(i[1]) for i in enumerate(index_condition_numbers_df.index)][::-1],
+    index_condition_numbers_df[::-1],
+    color = "lightgreen")
+
+# Set title
+ax.set_title("Asset Class Index: Covariance Estimator and Number of Conditions", ha='center')
+
+# Left-align y-tick labels
+ax.tick_params(axis='y', pad=10)  # Add padding so labels don't overlap bars
+for label in ax.get_yticklabels():
+    label.set_horizontalalignment('left')
+    label.set_color('black')  # 🔴 Set text color to red
+plt.show()
+
+
+
+
+### Equity - Frobenius Norms
+index_rel_frob = np.zeros([11,11])
+
+for i in enumerate(index_condition_numbers_df.index):
+    for j in enumerate(index_condition_numbers_df.index):
+        index_rel_frob[i[0],j[0]] = np.linalg.norm(index_cov_estimators[i[0]] - index_cov_estimators[j[0]],ord="fro")
+
+
+# Plot
+fig, ax = plt.subplots(figsize=(8, 8))  # Adjust size as needed
+cax = ax.imshow(100 * index_rel_frob, cmap='coolwarm')
+
+# Annotate cells with values
+for i in range(index_rel_frob.shape[0]):
+    for j in range(index_rel_frob.shape[1]):
+        ax.text(j, i, f'{100*index_rel_frob[i, j]:.2f}',
+                ha='center', va='center', color='black')
+
+# Optional: Add colorbar and remove ticks
+fig.colorbar(cax, ax=ax, label='Frobenius Norm')
+ax.set_xticks([i for i in range(0,11)])
+ax.set_yticks([i for i in range(0,11)])
+ax.set_title('Asset Class Index - Frobenius Norms Heatmap',size = 20)
+plt.legend(list(index_condition_numbers_df.index))
+plt.tight_layout()
+plt.show()
+
+
 
 
 
