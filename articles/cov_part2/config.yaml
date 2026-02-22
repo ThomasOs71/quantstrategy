@@ -1,0 +1,15 @@
+universe:
+  tickers: [SPY, EFA, EEM, AGG, LQD, HYG, GLD, VNQ, DBC]
+  stooq_suffix: ".us"
+backtest:
+  rebalance: "month_end"
+  cap: 0.60
+  win_months: 36
+  win_days: 756
+  scale_days_to_month: 21
+  ewma_lambda: 0.94         
+  transaction_cost_bps: 5.0
+paths:
+  data_raw: "data_raw"
+  figures: "figures"
+  results: "results"

@@ -1,0 +1,108 @@
+{
+  "data": {
+    "first_date": "2007-04-11",
+    "last_date": "2026-01-09",
+    "n_daily_obs": 4714,
+    "n_rebalances": 189,
+    "tickers": [
+      "SPY",
+      "EFA",
+      "EEM",
+      "AGG",
+      "LQD",
+      "HYG",
+      "GLD",
+      "VNQ",
+      "DBC"
+    ]
+  },
+  "setups": {
+    "A_monthly": {
+      "MALE": 0.8792666170125409,
+      "Median_RV_over_PV": 0.4680324695329312,
+      "Mean_RV_over_PV": 1.0206182598816618,
+      "Mean_Turnover": 0.021481950367483734
+    },
+    "B_daily_scaled": {
+      "MALE": 0.7809499404471992,
+      "Median_RV_over_PV": 0.5380863288875705,
+      "Mean_RV_over_PV": 1.3577553673534466,
+      "Mean_Turnover": 0.009798454264836822
+    },
+    "C_mixed": {
+      "MALE": 0.539974910903087,
+      "Median_RV_over_PV": 0.9742604949722701,
+      "Mean_RV_over_PV": 1.9340485574134973,
+      "Mean_Turnover": 0.043510330203682765
+    }
+  },
+  "assumptions": {
+    "transaction_cost_bps_per_unit_turnover": 5.0
+  },
+  "economic": {
+    "A_gross": {
+      "Annual_Return": 0.032771960776315945,
+      "Annual_Volatility": 0.051266051042885376,
+      "Sharpe_0rf": 0.6392526849571728,
+      "Downside_Deviation_Ann": 0.03790340273636326,
+      "Max_Drawdown": -0.15347188034064807,
+      "Calmar": 0.21353723368460006
+    },
+    "B_gross": {
+      "Annual_Return": 0.030648900496301312,
+      "Annual_Volatility": 0.050107554372177746,
+      "Sharpe_0rf": 0.6116622708954068,
+      "Downside_Deviation_Ann": 0.0368895522826723,
+      "Max_Drawdown": -0.14132007976707062,
+      "Calmar": 0.21687576561531843
+    },
+    "C_gross": {
+      "Annual_Return": 0.02500075126762824,
+      "Annual_Volatility": 0.049746966829763845,
+      "Sharpe_0rf": 0.5025583037691893,
+      "Downside_Deviation_Ann": 0.03708018071713678,
+      "Max_Drawdown": -0.17789675578913455,
+      "Calmar": 0.14053517253154552
+    },
+    "A_net": {
+      "Annual_Return": 0.03264013136894528,
+      "Annual_Volatility": 0.05126152652894659,
+      "Sharpe_0rf": 0.6367374048159472,
+      "Downside_Deviation_Ann": 0.03792873099808402,
+      "Max_Drawdown": -0.1535915066925011,
+      "Calmar": 0.21251260614490014
+    },
+    "B_net": {
+      "Annual_Return": 0.030588900049978607,
+      "Annual_Volatility": 0.0501050427993833,
+      "Sharpe_0rf": 0.6104954380032004,
+      "Downside_Deviation_Ann": 0.036890068751529635,
+      "Max_Drawdown": -0.14135006276279538,
+      "Calmar": 0.21640528098888034
+    },
+    "C_net": {
+      "Annual_Return": 0.024735196222221978,
+      "Annual_Volatility": 0.049745489698369526,
+      "Sharpe_0rf": 0.49723495280081054,
+      "Downside_Deviation_Ann": 0.037086485559435424,
+      "Max_Drawdown": -0.17817074023522328,
+      "Calmar": 0.13882861007125108
+    },
+    "EqualWeight": {
+      "Annual_Return": 0.0565544458288334,
+      "Annual_Volatility": 0.09468801336800631,
+      "Sharpe_0rf": 0.597271437188504,
+      "Downside_Deviation_Ann": 0.06730988207959485,
+      "Max_Drawdown": -0.17751916209043817,
+      "Calmar": 0.31858220353711114
+    },
+    "60_40_SPY_AGG": {
+      "Annual_Return": 0.09002006613822156,
+      "Annual_Volatility": 0.09118344042939236,
+      "Sharpe_0rf": 0.987241386312116,
+      "Downside_Deviation_Ann": 0.0626312004585396,
+      "Max_Drawdown": -0.20172373942281951,
+      "Calmar": 0.44625420089767703
+    }
+  }
+}
