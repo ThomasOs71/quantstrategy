@@ -1,0 +1,5 @@
+model,target,predictors,observations,r_squared,intercept,coef::expected_growth,coef::dividend_payout,coef::beta,coef::roe,coef::roic,coef::cost_of_equity,coef::net_margin,coef::fundamental_growth,coef::pre_tax_operating_margin,coef::net_capex_sales,coef::cost_of_capital
+pe_model,forward_pe,"['expected_growth', 'dividend_payout', 'beta']",91,0.10304141615454387,9.7637471686076,-0.7571988726685213,-1.9872709381385532,13.469926202513221,,,,,,,,
+pbv_model,pbv,"['roe', 'roic', 'cost_of_equity']",89,0.5703815019033917,-2.4505855901718263,,,,12.280512702154343,4.073610438800049,36.490520599740464,,,,,
+ps_model,price_sales,"['net_margin', 'fundamental_growth', 'beta']",93,0.46832852901064514,-0.22787328889162797,,,1.4312086546228304,,,,11.145453767568737,0.013663709207615504,,,
+ev_ebitda_model,ev_ebitda,"['roic', 'pre_tax_operating_margin', 'net_capex_sales', 'cost_of_capital']",88,0.3022042438472914,-0.9826886686898089,,,,,-11.365623382022811,,,,18.27551759348067,-7.434990983055278,169.0444715656505

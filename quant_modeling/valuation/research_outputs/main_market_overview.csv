@@ -1,0 +1,3 @@
+market,proxy_ticker,damodaran_forward_pe,damodaran_forward_earnings_yield_pct,damodaran_total_erp_pct,damodaran_spread_pct,damodaran_signal,etf_trailing_12m_dy_pct,etf_regime,etf_expected_12m_total_return_pct,us_shiller_state,us_shiller_composite_signal,us_shiller_composite_10y_real_pct,combined_signal
+USA,SPY,19.18045112781955,5.2136417091336735,4.46,0.7536417091336733,neutral,1.061385749595614,low,12.808190847158285,expensive,underweight,4.5485029622035045,underweight
+Europe,VGK,14.858223858938157,6.730279537405388,4.8326779599075875,1.8976015774978003,neutral,2.6494400005685876,low,6.553086212618952,,,,underweight

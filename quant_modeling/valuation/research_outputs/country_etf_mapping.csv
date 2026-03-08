@@ -1,0 +1,31 @@
+market_key,proxy_ticker,proxy_name,backtest_included,major_market
+United States,SPY,SPDR S&P 500 ETF Trust,True,True
+Europe,VGK,Vanguard FTSE Europe ETF,True,True
+United Kingdom,EWU,iShares MSCI United Kingdom ETF,True,False
+Germany,EWG,iShares MSCI Germany ETF,True,False
+France,EWQ,iShares MSCI France ETF,True,False
+Spain,EWP,iShares MSCI Spain ETF,True,False
+Italy,EWI,iShares MSCI Italy ETF,True,False
+Switzerland,EWL,iShares MSCI Switzerland ETF,True,False
+Netherlands,EWN,iShares MSCI Netherlands ETF,True,False
+Sweden,EWD,iShares MSCI Sweden ETF,True,False
+Austria,EWO,iShares MSCI Austria ETF,True,False
+Japan,EWJ,iShares MSCI Japan ETF,True,False
+Australia,EWA,iShares MSCI Australia ETF,True,False
+Canada,EWC,iShares MSCI Canada ETF,True,False
+Hong Kong,EWH,iShares MSCI Hong Kong ETF,True,False
+South Korea,EWY,iShares MSCI South Korea ETF,True,False
+Taiwan,EWT,iShares MSCI Taiwan ETF,True,False
+India,INDA,iShares MSCI India ETF,True,False
+China,FXI,iShares China Large-Cap ETF,True,False
+Brazil,EWZ,iShares MSCI Brazil ETF,True,False
+Mexico,EWW,iShares MSCI Mexico ETF,True,False
+South Africa,EZA,iShares MSCI South Africa ETF,True,False
+Poland,EPOL,iShares MSCI Poland ETF,True,False
+Turkey,TUR,iShares MSCI Turkey ETF,True,False
+Chile,ECH,iShares MSCI Chile ETF,True,False
+Peru,EPU,iShares MSCI Peru and Global Exposure ETF,True,False
+Argentina,ARGT,Global X MSCI Argentina ETF,True,False
+Philippines,EPHE,iShares MSCI Philippines ETF,True,False
+Vietnam,VNM,VanEck Vietnam ETF,True,False
+Malaysia,EWM,iShares MSCI Malaysia ETF,True,False

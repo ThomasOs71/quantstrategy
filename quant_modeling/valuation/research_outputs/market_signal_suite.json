@@ -1,0 +1,89 @@
+{
+  "us_composite": {
+    "valuation_state": "expensive",
+    "composite_signal": "underweight",
+    "composite_score": -1.0,
+    "composite_forecast_real_10y_pct": 4.5485029622035045,
+    "signal_details": [
+      {
+        "signal": "DY",
+        "regime": "low",
+        "forecast_regime_real_annual_pct": 4.796220345554708
+      },
+      {
+        "signal": "EY",
+        "regime": "low",
+        "forecast_regime_real_annual_pct": 4.84672771066711
+      },
+      {
+        "signal": "CY",
+        "regime": "low",
+        "forecast_regime_real_annual_pct": 4.002560830388696
+      }
+    ]
+  },
+  "backtest_summary": [
+    {
+      "portfolio": "strategy",
+      "annual_return": 0.12259703489164964,
+      "annual_vol": 0.19477195991468532,
+      "sharpe": 0.6294388316744874,
+      "max_drawdown": -0.3438719946763794,
+      "hit_rate": 0.5776699029126213,
+      "avg_names": 9.466019417475728,
+      "start": "2008-12-31",
+      "end": "2026-01-31",
+      "obs_months": 206,
+      "annualized_excess_return": 0.030728813236645225,
+      "avg_excess_return_monthly": 0.0025630724104547427
+    },
+    {
+      "portfolio": "benchmark",
+      "annual_return": 0.09186822165500441,
+      "annual_vol": 0.17992893453834083,
+      "sharpe": 0.5105805905577033,
+      "max_drawdown": -0.33641231857055354,
+      "hit_rate": 0.5776699029126213,
+      "avg_names": 27.703883495145632,
+      "start": "2008-12-31",
+      "end": "2026-01-31",
+      "obs_months": 206,
+      "annualized_excess_return": 0.030728813236645225,
+      "avg_excess_return_monthly": 0.0025630724104547427
+    }
+  ],
+  "main_market_overview": [
+    {
+      "market": "USA",
+      "proxy_ticker": "SPY",
+      "damodaran_forward_pe": 19.18045112781955,
+      "damodaran_forward_earnings_yield_pct": 5.2136417091336735,
+      "damodaran_total_erp_pct": 4.46,
+      "damodaran_spread_pct": 0.7536417091336733,
+      "damodaran_signal": "neutral",
+      "etf_trailing_12m_dy_pct": 1.061385749595614,
+      "etf_regime": "low",
+      "etf_expected_12m_total_return_pct": 12.808190847158285,
+      "us_shiller_state": "expensive",
+      "us_shiller_composite_signal": "underweight",
+      "us_shiller_composite_10y_real_pct": 4.5485029622035045,
+      "combined_signal": "underweight"
+    },
+    {
+      "market": "Europe",
+      "proxy_ticker": "VGK",
+      "damodaran_forward_pe": 14.858223858938157,
+      "damodaran_forward_earnings_yield_pct": 6.730279537405388,
+      "damodaran_total_erp_pct": 4.8326779599075875,
+      "damodaran_spread_pct": 1.8976015774978003,
+      "damodaran_signal": "neutral",
+      "etf_trailing_12m_dy_pct": 2.6494400005685876,
+      "etf_regime": "low",
+      "etf_expected_12m_total_return_pct": 6.553086212618952,
+      "us_shiller_state": null,
+      "us_shiller_composite_signal": null,
+      "us_shiller_composite_10y_real_pct": null,
+      "combined_signal": "underweight"
+    }
+  ]
+}

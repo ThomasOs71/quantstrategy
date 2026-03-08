@@ -1,0 +1,189 @@
+{
+  "as_of": "2026-02-28",
+  "artifacts": {
+    "variable_table": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\damodaran_enhanced_variable_table.csv",
+    "us_sector_scores": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\damodaran_us_enhanced_sector_scores.csv",
+    "us_regression_summary": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\damodaran_us_regression_summary.csv",
+    "europe_sector_scores": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\damodaran_europe_enhanced_sector_scores.csv",
+    "europe_regression_summary": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\damodaran_europe_regression_summary.csv",
+    "summary_md": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\damodaran_enhanced_summary.md"
+  },
+  "regions": {
+    "us": {
+      "region": "us",
+      "industry_count": 89,
+      "top_cheap_industries": [
+        {
+          "Industry Name": "Tobacco",
+          "final_value_score": 1.8744344089205724,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        },
+        {
+          "Industry Name": "Precious Metals",
+          "final_value_score": 1.8155560947170635,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        },
+        {
+          "Industry Name": "Banks (Regional)",
+          "final_value_score": 1.7378904415741359,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        },
+        {
+          "Industry Name": "Bank (Money Center)",
+          "final_value_score": 1.4986008902381167,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        },
+        {
+          "Industry Name": "Telecom. Services",
+          "final_value_score": 1.3757362557235902,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        }
+      ],
+      "top_expensive_industries": [
+        {
+          "Industry Name": "Software (Internet)",
+          "final_value_score": -3.200010039119023,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        },
+        {
+          "Industry Name": "Electronics (Consumer & Office)",
+          "final_value_score": -2.972193764811016,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        },
+        {
+          "Industry Name": "Auto & Truck",
+          "final_value_score": -2.5231313302434764,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        },
+        {
+          "Industry Name": "Drugs (Biotechnology)",
+          "final_value_score": -2.0463165318570447,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        },
+        {
+          "Industry Name": "Restaurant/Dining",
+          "final_value_score": -1.926855430988733,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        }
+      ],
+      "action_counts": {
+        "market_weight": 43,
+        "overweight": 23,
+        "underweight": 23
+      },
+      "average_final_score": 0.03964364907430576,
+      "average_quality_overlay_delta": 0.05132713185180923,
+      "mean_r_squared": 0.29405905983484204
+    },
+    "europe": {
+      "region": "europe",
+      "industry_count": 93,
+      "top_cheap_industries": [
+        {
+          "Industry Name": "Information Services",
+          "final_value_score": 1.4318809225274416,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        },
+        {
+          "Industry Name": "Banks (Regional)",
+          "final_value_score": 1.3835453118632701,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        },
+        {
+          "Industry Name": "Precious Metals",
+          "final_value_score": 1.2844957969996416,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        },
+        {
+          "Industry Name": "Insurance (General)",
+          "final_value_score": 1.200651711002667,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        },
+        {
+          "Industry Name": "Oil/Gas (Integrated)",
+          "final_value_score": 1.1807968372753703,
+          "valuation_regime": "cheap",
+          "action": "overweight"
+        }
+      ],
+      "top_expensive_industries": [
+        {
+          "Industry Name": "Drugs (Biotechnology)",
+          "final_value_score": -3.0592773455921587,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        },
+        {
+          "Industry Name": "Semiconductor Equip",
+          "final_value_score": -2.501235672056711,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        },
+        {
+          "Industry Name": "Entertainment",
+          "final_value_score": -2.1359999029477397,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        },
+        {
+          "Industry Name": "Electrical Equipment",
+          "final_value_score": -1.9965873843108386,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        },
+        {
+          "Industry Name": "Semiconductor",
+          "final_value_score": -1.6187113112259577,
+          "valuation_regime": "expensive",
+          "action": "underweight"
+        }
+      ],
+      "action_counts": {
+        "market_weight": 45,
+        "overweight": 24,
+        "underweight": 24
+      },
+      "average_final_score": 0.01573053906620714,
+      "average_quality_overlay_delta": 0.01900573393545894,
+      "mean_r_squared": 0.360988922728968
+    }
+  },
+  "sources": {
+    "us": {
+      "pe": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/pedata.xls",
+      "pbv": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/pbvdata.xls",
+      "ps": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/psdata.xls",
+      "vebitda": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/vebitda.xls",
+      "fundgr": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/fundgr.xls",
+      "beta": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/betas.xls",
+      "capex": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/capex.xls",
+      "divfund": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/divfund.xls",
+      "wacc": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/wacc.xls"
+    },
+    "europe": {
+      "pe": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/peEurope.xls",
+      "pbv": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/pbvEurope.xls",
+      "ps": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/psEurope.xls",
+      "vebitda": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/vebitdaEurope.xls",
+      "fundgr": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/fundgrEurope.xls",
+      "beta": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/betaEurope.xls",
+      "capex": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/capexEurope.xls",
+      "divfund": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/divfundEurope.xls",
+      "wacc": "https://pages.stern.nyu.edu/~adamodar/pc/datasets/waccEurope.xls"
+    }
+  }
+}

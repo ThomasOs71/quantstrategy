@@ -1,0 +1,5 @@
+multiple,cheap_if,add_variables,primary_driver,screen_formula,why_it_matters
+Forward PE,lower,"Expected growth, Dividend Payout, Beta",Growth,-z(Forward PE) + 0.8*z(Expected growth) + 0.4*z(Dividend Payout) - 0.6*z(Beta),Low PE is only attractive when growth is intact and risk is not materially higher.
+PBV,lower,"ROE, ROIC, Cost of Equity",ROE,-z(PBV) + 1.0*z(ROE) + 0.4*z(ROIC) - 0.4*z(Cost of Equity),Low PBV is often justified by weak profitability; ROE separates value from value traps.
+Price/Sales,lower,"Net Margin, Fundamental Growth, Beta",Margin,-z(Price/Sales) + 1.0*z(Net Margin) + 0.7*z(Fundamental Growth) - 0.5*z(Beta),Sales-based multiples only work when margins and growth quality can sustain valuation.
+EV/EBITDA,lower,"ROIC, Pre-tax Operating Margin, Net Cap Ex/Sales, Cost of Capital",Capital efficiency,-z(EV/EBITDA) + 0.8*z(ROIC) + 0.5*z(Pre-tax Operating Margin) - 0.6*z(Net Cap Ex/Sales) - 0.4*z(Cost of Capital),A low EV/EBITDA can be a capex trap; reinvestment needs and returns on capital matter.

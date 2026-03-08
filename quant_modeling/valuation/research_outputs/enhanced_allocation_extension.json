@@ -1,0 +1,81 @@
+{
+  "as_of": "2026-02-28",
+  "artifacts": {
+    "sector_scores_csv": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\usa_europe_sector_scores.csv",
+    "sector_actions_csv": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\usa_europe_sector_etf_actions.csv",
+    "dashboard_png": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\usa_europe_enhanced_allocation_dashboard.png",
+    "backtest_curve_csv": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\us_sector_proxy_enhanced_backtest_curve.csv",
+    "backtest_summary_csv": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\us_sector_proxy_enhanced_backtest_summary.csv",
+    "backtest_png": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\us_sector_proxy_enhanced_backtest.png",
+    "notes_md": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\enhanced_allocation_extension_notes.md"
+  },
+  "market_overview": [
+    {
+      "market": "USA",
+      "proxy_ticker": "SPY",
+      "damodaran_forward_pe": 19.18045112781955,
+      "damodaran_forward_earnings_yield_pct": 5.2136417091336735,
+      "damodaran_total_erp_pct": 4.46,
+      "damodaran_spread_pct": 0.7536417091336733,
+      "damodaran_signal": "neutral",
+      "etf_trailing_12m_dy_pct": 1.061385749595614,
+      "etf_regime": "low",
+      "etf_expected_12m_total_return_pct": 12.808190847158285,
+      "us_shiller_state": "expensive",
+      "us_shiller_composite_signal": "underweight",
+      "us_shiller_composite_10y_real_pct": 4.5485029622035045,
+      "combined_signal": "underweight"
+    },
+    {
+      "market": "Europe",
+      "proxy_ticker": "VGK",
+      "damodaran_forward_pe": 14.858223858938157,
+      "damodaran_forward_earnings_yield_pct": 6.730279537405388,
+      "damodaran_total_erp_pct": 4.8326779599075875,
+      "damodaran_spread_pct": 1.8976015774978003,
+      "damodaran_signal": "neutral",
+      "etf_trailing_12m_dy_pct": 2.6494400005685876,
+      "etf_regime": "low",
+      "etf_expected_12m_total_return_pct": 6.553086212618952,
+      "us_shiller_state": null,
+      "us_shiller_composite_signal": null,
+      "us_shiller_composite_10y_real_pct": NaN,
+      "combined_signal": "underweight"
+    }
+  ],
+  "backtest_summary": [
+    {
+      "portfolio": "raw",
+      "annual_return": 0.08033417301491674,
+      "annual_vol": 0.17307900806526566,
+      "sharpe": 0.46414740824389206,
+      "max_drawdown": -0.6482549668611286,
+      "hit_rate": 0.6245059288537549,
+      "obs_months": 253,
+      "avg_names": 3.0,
+      "vs_raw_annual_excess": 0.0
+    },
+    {
+      "portfolio": "enhanced",
+      "annual_return": 0.09054891162045697,
+      "annual_vol": 0.15665574940999613,
+      "sharpe": 0.5780120548494794,
+      "max_drawdown": -0.5190168414582457,
+      "hit_rate": 0.6284584980237155,
+      "obs_months": 253,
+      "avg_names": 3.0,
+      "vs_raw_annual_excess": 0.01021473860554023
+    },
+    {
+      "portfolio": "benchmark",
+      "annual_return": 0.10242446369613778,
+      "annual_vol": 0.14685909947759074,
+      "sharpe": 0.6974335540697412,
+      "max_drawdown": -0.5028342567092194,
+      "hit_rate": 0.6521739130434783,
+      "obs_months": 253,
+      "avg_names": 11.0,
+      "vs_raw_annual_excess": NaN
+    }
+  ]
+}

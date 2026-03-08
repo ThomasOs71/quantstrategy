@@ -1,0 +1,24 @@
+{
+  "us": {
+    "data_url": "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/25d6827d-c04b-447a-bb6d-918d5d88be49/ie_data.xls?ver=1770307872442",
+    "latest_month_online": "2026-02",
+    "latest_complete_quarter": "2025Q4"
+  },
+  "damodaran": {
+    "stats_update": "2026-01-05",
+    "erp_update": "2026-01-01",
+    "mature_market_erp": 0.0423,
+    "us_equity_erp": 0.0446,
+    "coverage_rows": 59
+  },
+  "artifacts": {
+    "us_regime_summary_csv": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\us_regime_summary.csv",
+    "us_live_signal_csv": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\us_live_signal.csv",
+    "damodaran_country_signal_csv": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\damodaran_country_signal.csv",
+    "damodaran_top_bottom_csv": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\damodaran_top_bottom.csv",
+    "us_extremes_advantage": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\us_extremes_advantage.png",
+    "us_live_signal": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\us_live_signal.png",
+    "damodaran_country_spread": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\damodaran_country_spread.png",
+    "summary_md": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\quant_modeling\\valuation\\research_outputs\\summary.md"
+  }
+}
