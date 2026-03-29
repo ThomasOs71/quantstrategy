@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import plotly.graph_objects as go
 
-from .utils import ASSET_COLUMNS, ARCHITECTURE_ORDER, SWEEP_CHART_ASSETS
+from .utils import ARCHITECTURE_NAMES, ASSET_COLUMNS, ARCHITECTURE_ORDER, SWEEP_CHART_ASSETS
 
 ASSET_COLORS = {
     "US": "#1f77b4",
@@ -11,11 +11,7 @@ ASSET_COLORS = {
     "EM": "#2ca02c",
     "Japan": "#7f7f7f",
 }
-ARCHITECTURE_TITLES = {
-    "A": "Architecture A",
-    "B": "Architecture B",
-    "C": "Architecture C",
-}
+ARCHITECTURE_TITLES = ARCHITECTURE_NAMES
 
 
 def _empty_figure(message: str) -> go.Figure:
@@ -79,7 +75,8 @@ def make_weight_sweep_figure(
         (sweep_results["architecture"] == architecture) & (sweep_results["is_feasible"])
     ].copy()
     if subset.empty:
-        return _empty_figure(f"No feasible sweep points for Architecture {architecture}.")
+        architecture_name = ARCHITECTURE_TITLES.get(architecture, architecture)
+        return _empty_figure(f"No feasible sweep points for {architecture_name}.")
 
     subset = subset.sort_values("mu_europe", ascending=False)
     figure = go.Figure()

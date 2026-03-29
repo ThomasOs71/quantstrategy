@@ -9,6 +9,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SUBSTACK_ARTICLE_URL = "https://quantstrategy.substack.com/"
 GITHUB_REPO_URL = "https://github.com/ThomasOs71/quantstrategy"
 ARCHITECTURE_ORDER = ["A", "B", "C"]
+ARCHITECTURE_NAMES = {
+    "A": "Standard Optimization",
+    "B": "Risk-Constrained Optimization",
+    "C": "Lexicographic Risk-Constrained Optimization",
+}
 ASSET_COLUMNS = ["US", "Europe", "EM", "Japan"]
 SWEEP_CHART_ASSETS = ["US", "Europe", "EM"]
 STATUS_LABELS = {
@@ -93,6 +98,9 @@ def make_comparison_table(summary_metrics: pd.DataFrame) -> pd.DataFrame:
             "max_adjacent_jump",
         ]
     ].copy()
+    table["architecture"] = table["architecture"].map(
+        lambda value: ARCHITECTURE_NAMES.get(str(value), str(value))
+    )
     table["status"] = table["status"].map(format_status)
     table = table.rename(
         columns={

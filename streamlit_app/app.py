@@ -15,6 +15,7 @@ from streamlit_app.load_data import StreamlitDataError, load_data_manifest, load
 from streamlit_app.plotting import make_portfolio_pie_chart, make_weight_sweep_figure, sort_architecture_rows
 from streamlit_app.utils import (
     ARCHITECTURE_ORDER,
+    ARCHITECTURE_NAMES,
     ASSET_COLUMNS,
     GITHUB_REPO_URL,
     SUBSTACK_ARTICLE_URL,
@@ -32,9 +33,9 @@ st.set_page_config(
 )
 
 ARCHITECTURE_EXPLAINERS = {
-    "A": "Baseline return-maximizing portfolio under the benchmark-relative portfolio CVaR and turnover guardrails.",
-    "B": "Adds an explicit TE-CVaR discipline to the stronger single-stage formulation.",
-    "C": "Starts from B and then uses a lexicographic second stage to stay closer to the benchmark.",
+    "A": "Single-stage optimizer with the core benchmark-relative portfolio CVaR and turnover guardrails.",
+    "B": "Adds an explicit TE-CVaR constraint to the stronger single-stage optimization setup.",
+    "C": "Builds on the risk-constrained setup with a lexicographic second stage that stays closer to the benchmark.",
 }
 
 
@@ -191,8 +192,9 @@ def main() -> None:
         "`Optimization_Lexicographic_2` research stack, so every interaction is instant and reproducible."
     )
     st.caption(
-        "A is the simplest baseline, B adds active-risk discipline, and C adds a lexicographic "
-        "second stage that pulls the solution back toward the benchmark without materially giving up the stage-one optimum."
+        "Standard Optimization is the lean baseline, Risk-Constrained Optimization adds active-risk "
+        "discipline, and Lexicographic Risk-Constrained Optimization adds a second stage that stays closer "
+        "to the benchmark without materially giving up the stage-one optimum."
     )
     st.markdown(
         f"<div class='qs-link-row'><a href='{SUBSTACK_ARTICLE_URL}'>Substack article</a>  |  "
@@ -313,7 +315,7 @@ def main() -> None:
     for column, architecture in zip(portfolio_columns, ARCHITECTURE_ORDER):
         with column:
             with st.container(border=True):
-                st.markdown(f"### Architecture {architecture}")
+                st.markdown(f"### {ARCHITECTURE_NAMES.get(architecture, architecture)}")
                 st.markdown(
                     f"<div class='qs-arch-note'>{ARCHITECTURE_EXPLAINERS[architecture]}</div>",
                     unsafe_allow_html=True,
