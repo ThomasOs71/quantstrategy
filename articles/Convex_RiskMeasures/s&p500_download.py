@@ -5,13 +5,18 @@ Created on Sat Nov 22 14:57:00 2025
 @author: thoma
 """
 
-import requests
+import argparse
+from io import StringIO
+from pathlib import Path
+
 import pandas as pd
-import os
+import requests
 
-os.chdir(r"C:\Users\thoma\OneDrive\Dokumente\Lifestyle\Next_Level\Kurse\ARPM\ARPM\Projekt1_DataScience")
 
-def get_sp500_constituents_from_wikipedia():
+SCRIPT_DIR = Path(__file__).resolve().parent
+DEFAULT_OUTPUT = SCRIPT_DIR / "SP500_full_list.csv"
+
+def get_sp500_constituents_from_wikipedia() -> pd.DataFrame:
     """
     Lädt die S&P-500-Liste von Wikipedia und gibt ein DataFrame mit:
     Ticker, Name, Sector, IndustryGroup, Ticker_yf, Date_added (datetime)
@@ -26,11 +31,11 @@ def get_sp500_constituents_from_wikipedia():
         )
     }
 
-    resp = requests.get(url, headers=headers)
+    resp = requests.get(url, headers=headers, timeout=30)
     resp.raise_for_status()
 
     # Alle Tabellen parsen
-    tables = pd.read_html(resp.text)
+    tables = pd.read_html(StringIO(resp.text))
 
     # Tabelle mit GICS-Infos finden
     target = None
@@ -110,11 +115,24 @@ def get_sp500_constituents_from_wikipedia():
 
     return df_simple
 
-
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Download the current S&P 500 constituents table from Wikipedia."
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help="Output CSV path. Defaults to the article folder.",
+    )
+    args = parser.parse_args()
+
     sp500 = get_sp500_constituents_from_wikipedia()
+    output_path = args.output
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
     print(f"Anzahl Constituents: {len(sp500)}")
     print(sp500.dtypes)  # Kontrollcheck: Date_added sollte datetime64[ns] sein
 
-    sp500.to_csv("SP500_full_list.csv", index=False)
-    print("SP500_full_list.csv wurde gespeichert.")
+    sp500.to_csv(output_path, index=False)
+    print(f"{output_path.resolve()} wurde gespeichert.")

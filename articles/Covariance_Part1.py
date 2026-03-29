@@ -62,6 +62,38 @@ def cov2corr(cov:np.ndarray) -> np.ndarray:
     return corr
 
 
+def stabilize_precomputed_matrix(matrix: np.ndarray, min_eigenvalue: float = 1e-6) -> np.ndarray:
+    matrix = 0.5 * (matrix + matrix.T)
+    smallest_eigenvalue = np.min(np.linalg.eigvalsh(matrix))
+    if smallest_eigenvalue < min_eigenvalue:
+        ridge = (min_eigenvalue - smallest_eigenvalue) + 1e-8
+        matrix = matrix + ridge * np.eye(matrix.shape[0])
+    return matrix
+
+
+def fit_graphical_lasso_precomputed(
+    matrix: np.ndarray,
+    alpha: float,
+    *,
+    max_iter: int = 500,
+) -> GraphicalLasso:
+    last_error = None
+    for min_eigenvalue in (1e-6, 1e-4, 1e-3, 1e-2):
+        stabilized = stabilize_precomputed_matrix(matrix, min_eigenvalue=min_eigenvalue)
+        for alpha_multiplier in (1.0, 5.0, 10.0, 25.0, 50.0):
+            try:
+                return GraphicalLasso(
+                    alpha=alpha * alpha_multiplier,
+                    covariance="precomputed",
+                    max_iter=max_iter,
+                ).fit(stabilized)
+            except FloatingPointError as exc:
+                last_error = exc
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError("GraphicalLasso fit failed without a captured solver error.")
+
+
 def exp_time_filter(nobs:int, alpha:int) -> np.ndarray:
     exp_time_filter = np.exp((np.log(2) / alpha) * np.arange(0,nobs))
     exp_time_filter /= np.sum(exp_time_filter)
@@ -372,8 +404,8 @@ equity_robust_cov_indirect = np.diag(np.sqrt(np.diag(equity_sample_cov))) @ equi
 '''
 Example of "Combination" of Approaches
 '''
-glasso_cov_estimator = GraphicalLasso(alpha=0.02,
-                                      covariance = "precomputed").fit(equity_robust_corr)
+glasso_cov_estimator = fit_graphical_lasso_precomputed(equity_robust_corr,
+                                                       alpha=0.02)
 equity_robust_glasso_corr = glasso_cov_estimator.covariance_
 equity_robust_glasso_cov = np.diag(np.sqrt(np.diag(equity_sample_cov))) @ equity_robust_glasso_corr @ np.diag(np.sqrt(np.diag(equity_sample_cov)))
 
@@ -392,8 +424,8 @@ equity_lw_cov_indirect = np.diag(np.sqrt(np.diag(equity_sample_cov))) @ equity_l
 
 ### GraphicalLasso
 ## Estimation of Covariance
-glasso_cov_estimator = GraphicalLasso(alpha=0.0002,
-                            covariance = "precomputed").fit(equity_sample_cov)
+glasso_cov_estimator = fit_graphical_lasso_precomputed(equity_sample_cov,
+                                                       alpha=0.0002)
 equity_glasso_cov = glasso_cov_estimator.covariance_
 '''
 Glasso directly on the covariance can make issues...better use on correlation...
@@ -468,8 +500,8 @@ index_robust_cov_indirect = np.diag(np.sqrt(np.diag(index_sample_cov))) @ index_
 '''
 Example of "Combination" of Approaches
 '''
-glasso_cov_estimator = GraphicalLasso(alpha=0.02,
-                                      covariance = "precomputed").fit(index_robust_corr)
+glasso_cov_estimator = fit_graphical_lasso_precomputed(index_robust_corr,
+                                                       alpha=0.02)
 index_robust_glasso_corr = glasso_cov_estimator.covariance_
 index_robust_glasso_cov = np.diag(np.sqrt(np.diag(index_sample_cov))) @ index_robust_glasso_corr @ np.diag(np.sqrt(np.diag(index_sample_cov)))
 
@@ -486,8 +518,8 @@ index_lw_cov_indirect = np.diag(np.sqrt(np.diag(index_sample_cov))) @ index_lw_c
 
 ### GraphicalLasso
 ## Estimation of Covariance
-glasso_cov_estimator = GraphicalLasso(alpha=0.0002,
-                            covariance = "precomputed").fit(index_sample_cov)
+glasso_cov_estimator = fit_graphical_lasso_precomputed(index_sample_cov,
+                                                       alpha=0.0002)
 index_glasso_cov = glasso_cov_estimator.covariance_
 '''
 Glasso directly on the covariance can make issues...better use on correlation...

@@ -6,6 +6,8 @@ Created on Sun Jul 27 13:40:34 2025
 """
 
 # %% Packages
+from pathlib import Path
+
 import numpy as np
 from scipy.stats import  norm, multivariate_normal, t, kurtosis
 import matplotlib.pyplot as plt
@@ -13,6 +15,9 @@ import pandas as pd
 import cvxpy as cp 
 from scipy.special import gamma
 from matplotlib.gridspec import GridSpec
+
+
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 # %% Functions
 # Helper: skewed-t inverse CDF (ppf) using transformation method
@@ -89,19 +94,16 @@ def pf_characteristics(weights,
 
 # %% Load Data
 
-# Set Path on your Drive
-path_ = r"C:\Users\thoma\OneDrive\Dokumente\quantstrategy\articles\Convex_RiskMeasures" 
-
 ### Load Data: Exp_Ret and Covariance
 # Expeted Returns
-expret = pd.read_excel(path_+ "\\" + r"expected_returns.xlsx",
+expret = pd.read_excel(SCRIPT_DIR / "expected_returns.xlsx",
                        index_col = 0)
 # Covariance
-covariance = pd.read_excel(path_+ "\\" + r"covariance.xlsx",
+covariance = pd.read_excel(SCRIPT_DIR / "covariance.xlsx",
                            index_col = 0)
 
 # Covariance
-df = pd.read_excel(path_+ "\\" + r"df.xlsx",
+df = pd.read_excel(SCRIPT_DIR / "df.xlsx",
                            index_col = 0)
 
 asset_index = expret.index
@@ -303,9 +305,10 @@ ax[5].set_title("US Treasury Bonds vs. US Corporates Bonds")
 
 # %% Portfolio Optimization
 ### Define Benchmark 
-bm = pd.Series([0] * len(list(asset_index)), 
-                  index = asset_index, 
-                  name ="bm_weights")
+bm = pd.Series(0.0,
+               index = asset_index,
+               name ="bm_weights",
+               dtype = float)
 
 bm["Government Bonds USA"] = 0.05
 bm["Government Bonds EMU"] = 0.15

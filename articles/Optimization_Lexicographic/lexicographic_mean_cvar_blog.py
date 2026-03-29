@@ -10,6 +10,18 @@ import pandas as pd
 from matplotlib.ticker import PercentFormatter
 
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+DEFAULT_INPUT = SCRIPT_DIR / "input" / "mc_scenarios.xlsx"
+DEFAULT_OUTPUT_DIR = SCRIPT_DIR / "output"
+DEFAULT_CASE_RESULTS_CSV = DEFAULT_OUTPUT_DIR / "lexicographic_results.csv"
+DEFAULT_CASE_SUMMARY_XLSX = DEFAULT_OUTPUT_DIR / "lexicographic_case_summary.xlsx"
+DEFAULT_CASE_CHART = DEFAULT_OUTPUT_DIR / "case_weight_changes.png"
+DEFAULT_SWEEP_RESULTS_CSV = DEFAULT_OUTPUT_DIR / "lexicographic_sweep_results.csv"
+DEFAULT_SWEEP_SUMMARY_XLSX = DEFAULT_OUTPUT_DIR / "lexicographic_sweep_case_summary.xlsx"
+DEFAULT_SWEEP_CHART = DEFAULT_OUTPUT_DIR / "sweep_weight_sensitivity.png"
+DEFAULT_SWEEP_LINKEDIN_CHART = DEFAULT_OUTPUT_DIR / "sweep_weight_sensitivity_linkedin.png"
+
+
 ASSETS = [
     "US Equities",
     "Europe Equities",
@@ -535,6 +547,90 @@ def plot_sweep_weights(results: pd.DataFrame, output_path: Path) -> None:
     plt.close(fig)
 
 
+def plot_sweep_weights_linkedin(results: pd.DataFrame, output_path: Path) -> None:
+    required_cols = [
+        "Europe Expected Return",
+        "US Equities",
+        "Europe Equities",
+        "Emerging Market Equities",
+    ]
+    missing = [col for col in required_cols if col not in results.columns]
+    if missing:
+        raise ValueError(
+            "LinkedIn sweep plot requires columns not found in results: " + ", ".join(missing)
+        )
+
+    plot_df = results.copy()
+    # LinkedIn version: use ascending axis for fast readability (6.0 -> 7.0).
+    plot_df = plot_df.sort_values("Europe Expected Return", ascending=True).reset_index(drop=True)
+    x = 100.0 * plot_df["Europe Expected Return"].to_numpy(dtype=float)
+
+    line_specs = [
+        ("US Equities", ASSET_COLORS["US Equities"]),
+        ("Europe Equities", ASSET_COLORS["Europe Equities"]),
+        ("Emerging Market Equities", ASSET_COLORS["Emerging Market Equities"]),
+    ]
+
+    plt.style.use("seaborn-v0_8-whitegrid")
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    for col, color in line_specs:
+        ax.plot(
+            x,
+            100.0 * plot_df[col].to_numpy(dtype=float),
+            color=color,
+            linewidth=2.6,
+            marker="o",
+            markersize=4.5,
+            label=col,
+        )
+
+    ax.set_xlim(x.min(), x.max())
+    ax.set_ylim(0.0, 60.0)
+    ax.set_xlabel(
+        "Expected Return Europe Equities (%)",
+        fontsize=PLOT_FONT_SIZES["axis_label"],
+    )
+    ax.set_ylabel("Portfolio Weight (%)", fontsize=PLOT_FONT_SIZES["axis_label"])
+    ax.set_title(
+        "Small Return Changes, Smooth Portfolio Adjustments",
+        fontsize=PLOT_FONT_SIZES["title"],
+        pad=12,
+    )
+    ax.tick_params(axis="both", labelsize=PLOT_FONT_SIZES["tick"])
+    ax.grid(alpha=0.25)
+    ax.legend(
+        frameon=False,
+        ncol=3,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.12),
+        fontsize=PLOT_FONT_SIZES["legend"],
+    )
+
+    ax.text(
+        0.01,
+        0.99,
+        "As Europe expected return declines from 7.0% to 6.0%,\n"
+        "allocations adjust gradually rather than flipping abruptly.",
+        transform=ax.transAxes,
+        ha="left",
+        va="top",
+        fontsize=PLOT_FONT_SIZES["tick"],
+        color="#36454F",
+        bbox={
+            "boxstyle": "round,pad=0.28",
+            "facecolor": "#F4F7FA",
+            "edgecolor": "#D4DCE5",
+            "alpha": 0.95,
+        },
+    )
+
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Mean-CVaR and lexicographic portfolio optimization for blog cases."
@@ -542,7 +638,7 @@ def main() -> None:
     parser.add_argument(
         "--input",
         type=Path,
-        default=Path("input/mc_scenarios.xlsx"),
+        default=DEFAULT_INPUT,
         help="Path to demeaned scenario workbook.",
     )
     parser.add_argument(
@@ -577,13 +673,13 @@ def main() -> None:
     parser.add_argument(
         "--output-csv",
         type=Path,
-        default=Path("output/lexicographic_results.csv"),
+        default=DEFAULT_CASE_RESULTS_CSV,
         help="Where to save the case results CSV.",
     )
     parser.add_argument(
         "--output-excel",
         type=Path,
-        default=Path("output/lexicographic_case_summary.xlsx"),
+        default=DEFAULT_CASE_SUMMARY_XLSX,
         help="Where to save the formatted case summary Excel file.",
     )
     parser.add_argument(
@@ -630,14 +726,20 @@ def main() -> None:
     parser.add_argument(
         "--output-case-chart",
         type=Path,
-        default=Path("output/case_weight_changes.png"),
+        default=DEFAULT_CASE_CHART,
         help="Where to save the four-case weight chart.",
     )
     parser.add_argument(
         "--output-sweep-chart",
         type=Path,
-        default=Path("output/sweep_weight_sensitivity.png"),
+        default=DEFAULT_SWEEP_CHART,
         help="Where to save the sweep sensitivity chart.",
+    )
+    parser.add_argument(
+        "--output-sweep-linkedin-chart",
+        type=Path,
+        default=DEFAULT_SWEEP_LINKEDIN_CHART,
+        help="Where to save the LinkedIn sweep sensitivity chart.",
     )
     parser.add_argument(
         "--no-plots",
@@ -650,10 +752,10 @@ def main() -> None:
     cvar_limit = None if args.no_cvar_constraint else args.cvar_limit
 
     if args.run_europe_sweep:
-        if args.output_csv == Path("output/lexicographic_results.csv"):
-            args.output_csv = Path("output/lexicographic_sweep_results.csv")
-        if args.output_excel == Path("output/lexicographic_case_summary.xlsx"):
-            args.output_excel = Path("output/lexicographic_sweep_case_summary.xlsx")
+        if args.output_csv == DEFAULT_CASE_RESULTS_CSV:
+            args.output_csv = DEFAULT_SWEEP_RESULTS_CSV
+        if args.output_excel == DEFAULT_CASE_SUMMARY_XLSX:
+            args.output_excel = DEFAULT_SWEEP_SUMMARY_XLSX
         results = run_europe_return_sweep(
             demeaned_scenarios=demeaned,
             cvar_alpha=args.cvar_alpha,
@@ -708,7 +810,12 @@ def main() -> None:
     if not args.no_plots:
         if args.run_europe_sweep:
             plot_sweep_weights(results, args.output_sweep_chart)
+            plot_sweep_weights_linkedin(results, args.output_sweep_linkedin_chart)
             print(f"Saved sweep chart to: {args.output_sweep_chart.resolve()}")
+            print(
+                "Saved LinkedIn sweep chart to: "
+                f"{args.output_sweep_linkedin_chart.resolve()}"
+            )
         else:
             plot_case_weights(results, args.output_case_chart)
             print(f"Saved case chart to: {args.output_case_chart.resolve()}")

@@ -1,0 +1,20 @@
+# Local Python environment
+.qs_venv/
+
+# Python cache and tooling noise
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Local generated article artifacts that are not source files
+articles/outputs/
+articles/Optimization_Lexicographic/output/sweep_weight_sensitivity_linkedin.png
+articles/Optimization_Lexicographic_2/outputs/

@@ -1,0 +1,250 @@
+{
+  "built_at_utc": "2026-03-29T17:38:43.708049+00:00",
+  "smoke_mode": false,
+  "workers": 6,
+  "row_count": 3780,
+  "grid": {
+    "mu_europe": [
+      0.07,
+      0.0695,
+      0.069,
+      0.0685,
+      0.068,
+      0.0675,
+      0.067,
+      0.0665,
+      0.066,
+      0.0655,
+      0.065,
+      0.0645,
+      0.064,
+      0.0635,
+      0.063,
+      0.0625,
+      0.062,
+      0.0615,
+      0.061,
+      0.0605,
+      0.06
+    ],
+    "portfolio_risk_factor": [
+      0.95,
+      1.0,
+      1.05,
+      1.1
+    ],
+    "te_cvar_limit": [
+      0.01,
+      0.02,
+      0.03,
+      0.04,
+      0.05
+    ],
+    "turnover_limit": [
+      0.2,
+      0.3,
+      0.4
+    ]
+  },
+  "feasible_counts_by_architecture": {
+    "A": 945,
+    "B": 945,
+    "C": 945
+  },
+  "status_counts": [
+    {
+      "architecture": "A",
+      "status": "infeasible",
+      "count": 315
+    },
+    {
+      "architecture": "B",
+      "status": "infeasible",
+      "count": 315
+    },
+    {
+      "architecture": "C",
+      "status": "infeasible",
+      "count": 315
+    },
+    {
+      "architecture": "A",
+      "status": "optimal",
+      "count": 945
+    },
+    {
+      "architecture": "B",
+      "status": "optimal",
+      "count": 945
+    },
+    {
+      "architecture": "C",
+      "status": "optimal",
+      "count": 945
+    }
+  ],
+  "asset_reference": [
+    {
+      "asset": "US",
+      "expected_return_base": 0.07,
+      "volatility": 0.1593124360757943
+    },
+    {
+      "asset": "Europe",
+      "expected_return_base": null,
+      "volatility": 0.15358676155628725
+    },
+    {
+      "asset": "EM",
+      "expected_return_base": 0.075,
+      "volatility": 0.19409516915446906
+    },
+    {
+      "asset": "Japan",
+      "expected_return_base": 0.055,
+      "volatility": 0.16262363674845343
+    }
+  ],
+  "base_config": {
+    "assets": [
+      "US",
+      "Europe",
+      "EM",
+      "Japan"
+    ],
+    "benchmark_weights": [
+      0.4,
+      0.4,
+      0.15,
+      0.05
+    ],
+    "lower_bounds": [
+      0.2,
+      0.2,
+      0.0,
+      0.0
+    ],
+    "upper_bounds": [
+      0.6,
+      0.6,
+      0.25,
+      0.2
+    ],
+    "mu_base": {
+      "US": 0.07,
+      "Europe": null,
+      "EM": 0.075,
+      "Japan": 0.055
+    },
+    "mu_europe_grid": [
+      0.07,
+      0.0695,
+      0.069,
+      0.0685,
+      0.068,
+      0.0675,
+      0.067,
+      0.0665,
+      0.066,
+      0.0655,
+      0.065,
+      0.0645,
+      0.064,
+      0.0635,
+      0.063,
+      0.0625,
+      0.062,
+      0.0615,
+      0.061,
+      0.0605,
+      0.06
+    ],
+    "selected_sweep_points": [
+      0.07,
+      0.065,
+      0.06
+    ],
+    "output_dir": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\articles\\Optimization_Lexicographic_2\\streamlit_data",
+    "scenario": {
+      "n_scenarios": 3000,
+      "seed": 42,
+      "distribution": "multivariate_normal",
+      "excel_path": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\articles\\Optimization_Lexicographic_2\\input\\mc_scenarios.xlsx",
+      "excel_sheet_name": null,
+      "probability_column": null,
+      "excel_scenarios_are_demeaned": true,
+      "synthetic_means": [
+        0.07,
+        0.065,
+        0.075,
+        0.055
+      ],
+      "volatilities": [
+        0.2,
+        0.15,
+        0.24,
+        0.14
+      ],
+      "correlation": [
+        [
+          1.0,
+          0.68,
+          0.6,
+          0.48
+        ],
+        [
+          0.68,
+          1.0,
+          0.55,
+          0.42
+        ],
+        [
+          0.6,
+          0.55,
+          1.0,
+          0.38
+        ],
+        [
+          0.48,
+          0.42,
+          0.38,
+          1.0
+        ]
+      ]
+    },
+    "optimization": {
+      "alpha": 0.9,
+      "cvar_portfolio_limit": 0.25,
+      "cvar_portfolio_limit_mode": "benchmark_factor",
+      "cvar_portfolio_benchmark_factor": 1.05,
+      "cvar_te_limit": 0.06,
+      "turnover_limit": 0.4,
+      "epsilon": 0.005,
+      "enable_turnover_constraint": true,
+      "auto_adjust_portfolio_cvar_to_benchmark": false,
+      "portfolio_cvar_adjustment_buffer": 0.0001,
+      "solver_preference": [
+        "ECOS",
+        "CLARABEL",
+        "OSQP",
+        "SCS"
+      ],
+      "solver_verbose": false
+    }
+  },
+  "scenario_metadata": {
+    "source": "excel_workbook",
+    "demeaned": true,
+    "excel_path": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\articles\\Optimization_Lexicographic_2\\input\\mc_scenarios.xlsx",
+    "sheet_name": "Sheet1",
+    "n_scenarios": 10000,
+    "asset_columns": {
+      "US": "MSCI USA",
+      "Europe": "MSCI Europe",
+      "EM": "MSCI Emerging Markets",
+      "Japan": "MSCI Japan"
+    },
+    "probability_column": null,
+    "provided_probabilities": false
+  }
+}
