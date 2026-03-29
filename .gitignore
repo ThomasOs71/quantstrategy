@@ -18,3 +18,6 @@ Thumbs.db
 articles/outputs/
 articles/Optimization_Lexicographic/output/sweep_weight_sensitivity_linkedin.png
 articles/Optimization_Lexicographic_2/outputs/
+
+# Powershell Scripts
+*.ps1
