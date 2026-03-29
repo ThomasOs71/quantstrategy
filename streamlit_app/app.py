@@ -291,19 +291,19 @@ def main() -> None:
         total_count = int(len(selected_snapshots))
         infeasible_architectures = selected_snapshots.loc[
             ~selected_snapshots["is_feasible"], "architecture"
-        ].tolist()
+        ].map(lambda value: ARCHITECTURE_NAMES.get(str(value), str(value))).tolist()
         if feasible_count == 0:
             st.warning(
-                "This selected point is infeasible for all three architectures in the precomputed library. "
+                "This selected point is infeasible for all three optimization designs in the precomputed library. "
                 "Try a higher risk factor or looser TE-CVaR / turnover budgets."
             )
         elif infeasible_architectures:
             st.info(
-                "Some architectures are infeasible for this selected point: "
+                "Some optimization designs are infeasible for this selected point: "
                 + ", ".join(infeasible_architectures)
             )
         elif feasible_count == total_count:
-            st.success("All three architectures are feasible for the selected parameter point.")
+            st.success("All three optimization designs are feasible for the selected parameter point.")
 
     st.subheader("Selected Portfolio Comparison")
     st.caption(
@@ -354,7 +354,7 @@ def main() -> None:
                 use_container_width=True,
             )
 
-    st.subheader("Architecture Comparison Table")
+    st.subheader("Optimization Comparison Table")
     if selected_summary.empty:
         st.warning("No summary metrics are available for this selected parameter combination.")
     else:
