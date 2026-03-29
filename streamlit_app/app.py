@@ -33,9 +33,9 @@ st.set_page_config(
 )
 
 ARCHITECTURE_EXPLAINERS = {
-    "A": "Single-stage optimizer with the core benchmark-relative portfolio CVaR and turnover guardrails.",
+    "A": "Single-stage optimization with benchmark-relative portfolio CVaR and turnover constraints.",
     "B": "Adds an explicit TE-CVaR constraint to the stronger single-stage optimization setup.",
-    "C": "Builds on the risk-constrained setup with a lexicographic second stage that stays closer to the benchmark.",
+    "C": "Builds on the risk-constrained setup with a second-stage lexicographic step that stays close to the benchmark while preserving near-optimality.",
 }
 
 
@@ -43,9 +43,49 @@ def _inject_styles() -> None:
     st.markdown(
         """
         <style>
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 2.5rem;
+        }
         .qs-link-row a {
             font-weight: 600;
             text-decoration: none;
+        }
+        .qs-link-row {
+            margin-bottom: 0.8rem;
+        }
+        .qs-takeaway-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 18px;
+            padding: 1rem 1.15rem;
+            margin: 1rem 0 1.35rem 0;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+        }
+        .qs-takeaway-title {
+            color: #1d4ed8;
+            font-size: 0.84rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 0.35rem;
+        }
+        .qs-takeaway-body {
+            color: #0f172a;
+            font-size: 1rem;
+            line-height: 1.55;
+            margin: 0;
+        }
+        .qs-section-divider {
+            border-top: 1px solid #e2e8f0;
+            margin: 1.35rem 0 0.9rem 0;
+        }
+        .qs-section-lead {
+            color: #475569;
+            font-size: 0.98rem;
+            line-height: 1.55;
+            margin: 0.15rem 0 0.95rem 0;
+            max-width: 68rem;
         }
         .qs-status-pill {
             display: inline-block;
@@ -69,25 +109,43 @@ def _inject_styles() -> None:
         }
         .qs-arch-note {
             color: #475569;
-            font-size: 0.92rem;
+            font-size: 0.95rem;
             line-height: 1.45;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.55rem;
         }
         .qs-metric-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.45rem 1rem;
-            margin-top: 0.75rem;
+            gap: 0.55rem 0.8rem;
+            margin-top: 0.85rem;
+        }
+        .qs-metric-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.65rem 0.75rem;
+        }
+        .qs-metric-item-secondary {
+            background: #ffffff;
         }
         .qs-metric-label {
             color: #64748b;
-            font-size: 0.82rem;
-            margin-bottom: 0.1rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            margin-bottom: 0.18rem;
         }
         .qs-metric-value {
             color: #111827;
-            font-size: 0.98rem;
-            font-weight: 700;
+            font-size: 1.12rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .qs-table-caption {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 0.55rem;
         }
         </style>
         """,
@@ -112,12 +170,12 @@ def _status_badge(status: str) -> str:
 
 def _render_metric_block(row) -> None:
     metric_items = [
-        ("Expected Return", format_pct(row["expected_return"])),
-        ("Demeaned Portf. CVaR", format_pct(row["portfolio_cvar"])),
-        ("Demeaned TE-CVaR", format_pct(row["te_cvar"])),
-        ("L2 BM Distance", format_pct(row["bm_dist_l2"])),
-        ("L1 vs Benchmark", format_pct(row["turnover"])),
-        ("Herfindahl", f"{row['herfindahl']:.3f}" if row["herfindahl"] == row["herfindahl"] else "N/A"),
+        ("Expected Return", format_pct(row["expected_return"]), True),
+        ("Portfolio CVaR", format_pct(row["portfolio_cvar"]), True),
+        ("TE-CVaR", format_pct(row["te_cvar"]), True),
+        ("Benchmark Distance", format_pct(row["bm_dist_l2"]), True),
+        ("Turnover", format_pct(row["turnover"]), True),
+        ("Herfindahl", f"{row['herfindahl']:.3f}" if row["herfindahl"] == row["herfindahl"] else "N/A", False),
     ]
     st.markdown(
         "".join(
@@ -125,16 +183,33 @@ def _render_metric_block(row) -> None:
                 "<div class='qs-metric-grid'>",
                 *[
                     (
-                        "<div>"
+                        f"<div class='qs-metric-item{' qs-metric-item-secondary' if not is_primary else ''}'>"
                         f"<div class='qs-metric-label'>{label}</div>"
                         f"<div class='qs-metric-value'>{value}</div>"
                         "</div>"
                     )
-                    for label, value in metric_items
+                    for label, value, is_primary in metric_items
                 ],
                 "</div>",
             ]
         ),
+        unsafe_allow_html=True,
+    )
+
+
+def _render_takeaway_box() -> None:
+    st.markdown(
+        """
+        <div class="qs-takeaway-box">
+            <div class="qs-takeaway-title">Key Takeaway</div>
+            <p class="qs-takeaway-body">
+                Standard Optimization is the most fragile architecture. TE-CVaR constraints improve
+                portfolio stability, but the result remains sensitive to the TE-CVaR limit.
+                Lexicographic Risk-Constrained Optimization provides the most stable and
+                benchmark-consistent final portfolio selection.
+            </p>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
 
@@ -201,6 +276,7 @@ def main() -> None:
         f"<a href='{GITHUB_REPO_URL}'>GitHub repository</a></div>",
         unsafe_allow_html=True,
     )
+    _render_takeaway_box()
 
     try:
         tables = load_precomputed_tables()
@@ -225,25 +301,27 @@ def main() -> None:
             options=options["mu_europe"],
             value=0.065 if 0.065 in options["mu_europe"] else float(options["mu_europe"][len(options["mu_europe"]) // 2]),
             format_func=lambda value: percent_display(value, 2),
-            help="This is the single portfolio point used in the pies and comparison table.",
+            help="Sets the exact portfolio snapshot used in the cards and the highlighted marker in the sweep charts.",
         )
         selected_risk_factor = st.select_slider(
-            "Portfolio risk factor",
+            "Portfolio risk budget factor",
             options=options["portfolio_risk_factor"],
             value=1.05 if 1.05 in options["portfolio_risk_factor"] else options["portfolio_risk_factor"][0],
-            help="Benchmark-relative demeaned portfolio CVaR factor. 1.00 is approximately the benchmark risk level.",
+            help="Benchmark-relative portfolio CVaR budget factor. 1.00 is approximately the benchmark demeaned portfolio risk level.",
         )
         selected_te_limit = st.select_slider(
-            "TE-CVaR limit",
+            "TE-CVaR downside-risk limit",
             options=options["te_cvar_limit"],
             value=0.02 if 0.02 in options["te_cvar_limit"] else options["te_cvar_limit"][0],
             format_func=lambda value: percent_display(value, 0),
+            help="Controls the allowed level of benchmark-relative downside risk in the tail.",
         )
         selected_turnover_limit = st.select_slider(
-            "Turnover limit",
+            "Turnover / reallocation limit",
             options=options["turnover_limit"],
             value=0.30 if 0.30 in options["turnover_limit"] else options["turnover_limit"][0],
             format_func=lambda value: percent_display(value, 0),
+            help="Limits portfolio reallocation intensity relative to the benchmark starting point.",
         )
         if manifest:
             st.caption(
@@ -305,11 +383,15 @@ def main() -> None:
         elif feasible_count == total_count:
             st.success("All three optimization designs are feasible for the selected parameter point.")
 
+    st.markdown("<div class='qs-section-divider'></div>", unsafe_allow_html=True)
     st.subheader("Selected Portfolio Comparison")
-    st.caption(
-        "Each chart shows the final portfolio at the selected point. The benchmark-relative "
-        "risk factor, TE-CVaR cap, and turnover limit are held fixed while the selected "
-        "Europe expected return pins down the exact portfolio snapshot."
+    st.markdown(
+        "<div class='qs-section-lead'>"
+        "Each card shows the final portfolio for the selected parameter point. The benchmark-relative "
+        "risk budget factor, TE-CVaR limit, and turnover limit stay fixed while the selected Europe "
+        "expected return pins down the exact portfolio snapshot."
+        "</div>",
+        unsafe_allow_html=True,
     )
     portfolio_columns = st.columns(3)
     for column, architecture in zip(portfolio_columns, ARCHITECTURE_ORDER):
@@ -336,11 +418,15 @@ def main() -> None:
                 st.plotly_chart(make_portfolio_pie_chart(row), use_container_width=True)
                 _render_metric_block(row)
 
+    st.markdown("<div class='qs-section-divider'></div>", unsafe_allow_html=True)
     st.subheader("Weight Sweep Across Europe Expected Return")
-    st.caption(
-        "These sweep charts hold the risk factor, TE-CVaR cap, and turnover limit fixed at "
-        "the sidebar selections, while Europe expected return moves across the full precomputed grid. "
-        "The dashed marker shows the currently selected Europe expected return."
+    st.markdown(
+        "<div class='qs-section-lead'>"
+        "These charts show how each architecture translates changes in Europe’s expected return into "
+        "portfolio weights. A smoother response indicates greater robustness and more benchmark-consistent "
+        "portfolio selection. The dashed marker highlights the currently selected Europe expected return."
+        "</div>",
+        unsafe_allow_html=True,
     )
     sweep_columns = st.columns(3)
     for column, architecture in zip(sweep_columns, ARCHITECTURE_ORDER):
@@ -354,12 +440,38 @@ def main() -> None:
                 use_container_width=True,
             )
 
+    st.markdown("<div class='qs-section-divider'></div>", unsafe_allow_html=True)
     st.subheader("Optimization Comparison Table")
     if selected_summary.empty:
         st.warning("No summary metrics are available for this selected parameter combination.")
     else:
         table = make_comparison_table(sort_architecture_rows(selected_summary))
-        st.dataframe(table, use_container_width=True, hide_index=True)
+        st.markdown(
+            "<div class='qs-table-caption'>"
+            "This table summarizes the selected point with consistently formatted percentages and compact "
+            "stability diagnostics."
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        st.dataframe(
+            table,
+            use_container_width=True,
+            hide_index=True,
+            height=245,
+            column_config={
+                "Architecture": st.column_config.TextColumn("Architecture", width="large"),
+                "Status": st.column_config.TextColumn("Status", width="small"),
+                "Expected Return": st.column_config.TextColumn("Expected Return", width="small"),
+                "Portfolio CVaR": st.column_config.TextColumn("Portfolio CVaR", width="small"),
+                "TE-CVaR": st.column_config.TextColumn("TE-CVaR", width="small"),
+                "Benchmark Dist.": st.column_config.TextColumn("Benchmark Dist.", width="small"),
+                "Turnover": st.column_config.TextColumn("Turnover", width="small"),
+                "Herfindahl": st.column_config.TextColumn("Herfindahl", width="small"),
+                "Effective N": st.column_config.TextColumn("Effective N", width="small"),
+                "Instability": st.column_config.TextColumn("Instability", width="small"),
+                "Max Jump": st.column_config.TextColumn("Max Jump", width="small"),
+            },
+        )
 
 
 if __name__ == "__main__":

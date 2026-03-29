@@ -28,10 +28,11 @@ def _empty_figure(message: str) -> go.Figure:
     figure.update_xaxes(visible=False)
     figure.update_yaxes(visible=False)
     figure.update_layout(
-        height=360,
-        margin={"l": 10, "r": 10, "t": 30, "b": 10},
+        height=420,
+        margin={"l": 12, "r": 12, "t": 36, "b": 18},
         paper_bgcolor="white",
         plot_bgcolor="white",
+        font={"size": 13, "color": "#0f172a"},
     )
     return figure
 
@@ -53,14 +54,21 @@ def make_portfolio_pie_chart(row: pd.Series | None) -> go.Figure:
                 hole=0.45,
                 sort=False,
                 marker={"colors": [ASSET_COLORS[asset] for asset in labels]},
-                textinfo="label+percent",
+                texttemplate="%{label}<br>%{percent}",
+                textposition="inside",
+                insidetextfont={"size": 13},
+                hovertemplate="%{label}<br>Weight=%{percent}<extra></extra>",
             )
         ]
     )
     figure.update_layout(
-        height=340,
-        margin={"l": 10, "r": 10, "t": 30, "b": 10},
+        height=390,
+        margin={"l": 8, "r": 8, "t": 26, "b": 8},
         showlegend=False,
+        uniformtext_minsize=11,
+        uniformtext_mode="hide",
+        paper_bgcolor="white",
+        font={"size": 13, "color": "#0f172a"},
     )
     return figure
 
@@ -87,7 +95,7 @@ def make_weight_sweep_figure(
                 y=subset[f"w_{asset}"],
                 mode="lines",
                 name=asset,
-                line={"width": 3, "color": ASSET_COLORS[asset]},
+                line={"width": 4, "color": ASSET_COLORS[asset]},
                 hovertemplate=f"{asset}<br>Europe ER=%{{x:.2%}}<br>Weight=%{{y:.2%}}<extra></extra>",
             )
         )
@@ -97,19 +105,23 @@ def make_weight_sweep_figure(
         selected_subset = subset[pd.Series(pd.to_numeric(subset["mu_europe"]), copy=False).sub(selected_mu).abs() < 1e-10]
         figure.add_vline(
             x=selected_mu,
-            line_width=1.5,
+            line_width=2.4,
             line_dash="dash",
-            line_color="#111827",
-            opacity=0.6,
+            line_color="#0f172a",
+            opacity=0.9,
         )
         figure.add_annotation(
             x=selected_mu,
-            y=1.12,
+            y=1.11,
             xref="x",
             yref="paper",
             text="Selected ER",
             showarrow=False,
-            font={"size": 11, "color": "#334155"},
+            font={"size": 11, "color": "#0f172a"},
+            bgcolor="rgba(255,255,255,0.92)",
+            bordercolor="#cbd5e1",
+            borderwidth=1,
+            borderpad=4,
         )
         if not selected_subset.empty:
             for asset in SWEEP_CHART_ASSETS:
@@ -120,9 +132,9 @@ def make_weight_sweep_figure(
                         mode="markers",
                         showlegend=False,
                         marker={
-                            "size": 10,
+                            "size": 12,
                             "color": ASSET_COLORS[asset],
-                            "line": {"color": "white", "width": 1.5},
+                            "line": {"color": "#0f172a", "width": 1.4},
                         },
                         hovertemplate=(
                             f"{asset}<br>Selected Europe ER=%{{x:.2%}}<br>"
@@ -135,21 +147,28 @@ def make_weight_sweep_figure(
         title={
             "text": (
                 f"{ARCHITECTURE_TITLES.get(architecture, architecture)}"
-                "<br><span style='font-size:12px;color:#64748b'>"
+                "<br><span style='font-size:13px;color:#64748b'>"
                 "Weight response as Europe expected return moves across the sweep"
                 "</span>"
-            )
+            ),
+            "x": 0.02,
+            "xanchor": "left",
         },
-        height=360,
-        margin={"l": 10, "r": 10, "t": 50, "b": 70},
+        height=500,
+        margin={"l": 8, "r": 6, "t": 66, "b": 82},
         legend={
             "orientation": "h",
             "yanchor": "top",
-            "y": -0.22,
+            "y": -0.2,
             "xanchor": "center",
             "x": 0.5,
+            "font": {"size": 12},
         },
         hovermode="x unified",
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        font={"size": 13, "color": "#0f172a"},
+        hoverlabel={"font_size": 12},
     )
     figure.update_xaxes(
         title="Europe expected return",
@@ -157,12 +176,18 @@ def make_weight_sweep_figure(
         autorange="reversed",
         showgrid=True,
         gridcolor="#E5E7EB",
+        title_font={"size": 14},
+        tickfont={"size": 12},
+        zeroline=False,
     )
     figure.update_yaxes(
         title="Portfolio weight",
         tickformat=".0%",
         showgrid=True,
         gridcolor="#E5E7EB",
+        title_font={"size": 14},
+        tickfont={"size": 12},
+        zeroline=False,
     )
     return figure
 

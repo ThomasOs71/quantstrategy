@@ -106,29 +106,29 @@ def make_comparison_table(summary_metrics: pd.DataFrame) -> pd.DataFrame:
         columns={
             "architecture": "Architecture",
             "status": "Status",
-            "expected_return": "Exp. Return",
-            "portfolio_cvar": "Portf. CVaR",
-            "te_cvar": "Demeaned TE-CVaR",
-            "bm_dist_l2": "L2 BM Dist.",
-            "turnover": "L1 vs BM",
+            "expected_return": "Expected Return",
+            "portfolio_cvar": "Portfolio CVaR",
+            "te_cvar": "TE-CVaR",
+            "bm_dist_l2": "Benchmark Dist.",
+            "turnover": "Turnover",
             "herfindahl": "Herfindahl",
-            "effective_n": "Eff. N",
-            "instability_score": "Instability Score",
+            "effective_n": "Effective N",
+            "instability_score": "Instability",
             "max_adjacent_jump": "Max Jump",
         }
     )
 
     for column in [
-        "Exp. Return",
-        "Portf. CVaR",
-        "Demeaned TE-CVaR",
-        "L2 BM Dist.",
-        "L1 vs BM",
+        "Expected Return",
+        "Portfolio CVaR",
+        "TE-CVaR",
+        "Benchmark Dist.",
+        "Turnover",
         "Max Jump",
     ]:
         table[column] = table[column].map(format_pct)
 
     table["Herfindahl"] = table["Herfindahl"].map(lambda value: format_float(value, 3))
-    table["Eff. N"] = table["Eff. N"].map(lambda value: format_float(value, 2))
-    table["Instability Score"] = table["Instability Score"].map(lambda value: format_pct(value, 2))
+    table["Effective N"] = table["Effective N"].map(lambda value: format_float(value, 2))
+    table["Instability"] = table["Instability"].map(lambda value: format_pct(value, 2))
     return table.reset_index(drop=True)
