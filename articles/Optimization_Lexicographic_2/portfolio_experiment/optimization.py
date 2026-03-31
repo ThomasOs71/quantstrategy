@@ -110,7 +110,7 @@ def _build_turnover_expression(
     prefix: str,
 ) -> tuple[cp.Expression, list[cp.Constraint]]:
     u = cp.Variable(w.shape[0], nonneg=True, name=f"{prefix}_turnover_slack")
-    constraints = [u >= w - w_prev, u >= -(w - w_prev)]
+    constraints = [u >= w - w_prev, u >= -(w - w_prev)]     # IDENTITY: u >= abs(w - w_prev)
     turnover_expr = cp.sum(u)
     return turnover_expr, constraints
 
@@ -135,7 +135,7 @@ def _build_problem(
     n_assets = R.shape[1]
     w = cp.Variable(n_assets, name=f"{prefix}_w")
     expected_return_expr = cp.sum(cp.multiply(mu_obj, w))
-
+    # Initialize constraints with basic box and budget constraints; additional constraints (CVaR, turnover, etc.) will be appended later
     constraints: list[cp.Constraint] = [
         cp.sum(w) == 1.0,
         w >= 0.0,
