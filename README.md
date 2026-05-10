@@ -1,38 +1,68 @@
-# quantstrategy
+# QuantStrategy
 
-Repository for the Substack "quantstrategy".
+> Companion code for [**QuantStrategy**](https://quantstrategy.substack.com) — a publication on robust portfolio construction, optimization, and risk modeling.
 
-## Environment
+This repository contains the Python code, notebooks, and case studies that accompany each article on the QuantStrategy Substack. Every method is implemented in a way you can adapt to your own data and portfolios — not just toy examples.
 
-This repo is set up so subscribers can run all article entrypoints from one shared environment.
+📌 **New here?** Start with **[Robust Portfolio Construction Architecture →](https://quantstrategy.substack.com)** — the framework that everything else in this repo builds on.
 
-```powershell
-py -3.11 -m venv .qs_venv
-.\.qs_venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
-.\.qs_venv\Scripts\python.exe -m pip install -r requirements.txt
+---
+
+## What you'll find here
+
+Code organized by article. Each folder contains the notebook, supporting modules, and a brief README pointing back to the original write-up.
+
+| Topic | Article |
+|---|---|
+| Covariance estimation (Ledoit-Wolf, Graphical Lasso, spectral denoising) | [Why Most Covariance Estimations Fail](https://quantstrategy.substack.com/p/why-most-covariance-estimations-fail) |
+| 13 practical rules for portfolio optimization | [Wie man Portfolio-Optimierung richtig anwendet](https://quantstrategy.substack.com/p/wie-man-portfolio-optimierung-richtig) |
+| _More coming — one article per month_ | |
+
+The full archive lives on [the Substack](https://quantstrategy.substack.com).
+
+---
+
+## Methods covered across articles
+
+- **Robust optimization** — CVaR, LPM, Distributionally Robust Optimization (Wasserstein)
+- **Covariance estimation** — Shrinkage, spectral denoising, Graphical Lasso
+- **View integration** — Entropy Pooling, Bayesian updating
+- **Risk decomposition** — Risk Parity, Minimum Torsion Bets
+- **Post-processing** — Resampling, stress testing, lexicographic optimization
+
+---
+
+## Setup
+
+```bash
+git clone https://github.com/ThomasOs71/quantstrategy.git
+cd quantstrategy
+pip install -r requirements.txt
 ```
 
-Recommended interpreter baseline: Python 3.11.
+Python 3.10+ recommended. Each notebook can be run independently.
 
-## Repo Hygiene
+---
 
-- The local virtual environment lives in `.qs_venv/` and is ignored by git.
-- Python cache files such as `__pycache__/` and `*.pyc` are ignored by git.
-- Some article folders contain generated outputs that are useful for published posts. Keep committing those only when you explicitly want them in the repo.
-- Scratch outputs such as `articles/outputs/`, the LinkedIn-specific sweep image, and the generated `articles/Optimization_Lexicographic_2/outputs/` directory are treated as local artifacts and ignored by default.
+## Stay in the loop
 
-## Article Run Matrix
+If you find this code useful, the best way to support the work is to [subscribe to the Substack](https://quantstrategy.substack.com) — new articles drop monthly, each with code added here.
 
-| Article | Entry Script | Required Local Inputs | Live Data | Default Outputs |
-| --- | --- | --- | --- | --- |
-| Covariance Part 1 | `articles/Covariance_Part1.py` | None | Yes, downloads market data from Yahoo Finance via `yfinance` | Interactive matplotlib figures only |
-| Convex Risk Measures | `articles/Convex_RiskMeasures/Convex_RiskMeasureCombination.py` | `expected_returns.xlsx`, `covariance.xlsx`, `df.xlsx` in the same folder | No | Interactive matplotlib figures only |
-| S&P 500 Constituents Helper | `articles/Convex_RiskMeasures/s&p500_download.py` | None | Yes, fetches the current S&P 500 table from Wikipedia | `articles/Convex_RiskMeasures/SP500_full_list.csv` by default, or `--output` |
-| Optimization Lexicographic | `articles/Optimization_Lexicographic/lexicographic_mean_cvar_blog.py` | `articles/Optimization_Lexicographic/input/mc_scenarios.xlsx` | No | Files under `articles/Optimization_Lexicographic/output/` |
-| Optimization Lexicographic 2 | `articles/Optimization_Lexicographic_2/run_experiment.py` | `articles/Optimization_Lexicographic_2/input/mc_scenarios.xlsx` | No | Files under `articles/Optimization_Lexicographic_2/outputs/` |
-| Covariance Part 2 | `articles/cov_part2/run_part2_frequency_trap.py --config config.yaml` | `config.yaml`; existing CSVs in `data_raw/` are reused if present | Downloads Stooq CSV files only when local data is missing | Files under `articles/cov_part2/results/` and `articles/cov_part2/figures/` |
+---
 
-## Notes
+## Authors
 
-- The older article scripts have been normalized to use paths relative to their own folders, so they work when launched from the repo root.
-- Some article scripts fetch current market or reference data, so reruns can produce different numbers than the published post.
+- **Dr. Thomas Osowski** — Head of Asset Allocation, quantitative portfolio construction
+- **Dr. Felix Haase** — Co-author
+
+---
+
+## Disclaimer
+
+All code is for **educational purposes only**. Nothing in this repository constitutes investment advice or a recommendation to buy or sell any financial instrument. The views expressed are our own.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
