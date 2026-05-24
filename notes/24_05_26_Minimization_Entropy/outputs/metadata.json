@@ -1,0 +1,57 @@
+{
+  "data_source": "local",
+  "local_data_dir": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\articles\\cov_part2\\data_raw",
+  "tickers": [
+    "SPY",
+    "EFA",
+    "EEM",
+    "AGG",
+    "LQD",
+    "HYG",
+    "GLD",
+    "VNQ",
+    "DBC"
+  ],
+  "in_sample": [
+    "2015-01-01",
+    "2021-12-31"
+  ],
+  "out_of_sample": [
+    "2022-01-01",
+    "2024-12-31"
+  ],
+  "bin_count": 20,
+  "frontier_points": 21,
+  "n_random_requested": 5000,
+  "n_candidate_weights": 5011,
+  "rolling_lookback_weeks": 156,
+  "max_weight": 0.6,
+  "seed": 42,
+  "governance": {
+    "rank_flips_m10_to_m30": 3,
+    "rank_pairs_compared": 35,
+    "rank_flip_share": 0.08571428571428572,
+    "l2_distance_m10_to_m30": 0.23048834431580975,
+    "l1_distance_m10_to_m30": 0.46357498749
+  },
+  "outputs": {
+    "summary_portfolios": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\summary_portfolios.csv",
+    "frontiers": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\frontiers.csv",
+    "input_return_stats": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\input_return_stats.csv",
+    "bin_sensitivity": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\bin_sensitivity.csv",
+    "bin_weight_distances": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\bin_weight_distances.csv",
+    "rolling_returns": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\rolling_returns.csv",
+    "rolling_weights": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\rolling_weights.csv",
+    "rolling_summary": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\rolling_summary.csv",
+    "summary_markdown": "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\summary.md",
+    "figures": [
+      "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\fig_1_frontiers.png",
+      "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\fig_2_min_risk_weights.png",
+      "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\fig_3_oos_cumulative_min_risk.png",
+      "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\fig_4_bin_sensitivity.png",
+      "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\fig_5_repo_vs_mvpo_outperformance.png",
+      "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\fig_6_rolling_vs_static_wealth.png",
+      "C:\\Users\\thoma\\OneDrive\\Dokumente\\quantstrategy\\notes\\24_05_26_Minimization_Entropy\\outputs\\fig_7_rolling_weight_stability.png"
+    ]
+  }
+}
