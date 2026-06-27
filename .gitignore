@@ -21,3 +21,7 @@ articles/Optimization_Lexicographic_2/outputs/
 
 # Powershell Scripts
 *.ps1
+planung/
+data/raw/msci/
+data/raw/fred_cache/
+*.parquet
