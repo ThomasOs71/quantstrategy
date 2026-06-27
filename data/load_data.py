@@ -64,8 +64,13 @@ def load_fred_series(
 
     api_key = fred_api_key or os.environ.get("FRED_API_KEY")
     if not api_key:
+        local_key_file = Path(__file__).parent / "FredAPI.txt"
+        if local_key_file.exists():
+            api_key = local_key_file.read_text(encoding="utf-8").strip()
+    if not api_key:
         raise ValueError(
-            "Missing FRED API key. Pass fred_api_key or set FRED_API_KEY env var."
+            "Missing FRED API key. Pass fred_api_key, set FRED_API_KEY env var, "
+            "or create data/FredAPI.txt (gitignored local helper file)."
         )
 
     fred = Fred(api_key=api_key)
