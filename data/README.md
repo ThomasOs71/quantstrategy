@@ -23,7 +23,7 @@ constraints and key hygiene.
 ## How to run locally
 
 1. Put your FRED API key into environment variable `FRED_API_KEY`
-   (or into `data/FredAPI.txt`, or pass it into `build_return_panel`).
+   (or into `data/FredAPI.txt`, `API_Keys/FredAPI.txt`, or pass it into `build_return_panel`).
 2. Download MSCI CSV files under `data/raw/msci/` per instructions there.
 3. Run your data pipeline.
 

@@ -31,6 +31,20 @@ EURIBOR_3M_SERIES = "IR3TIB01EZM156N"
 USD_3M_SERIES = "TB3MS"
 
 
+def _read_optional_fred_key() -> str | None:
+    """Read a local fallback FRED API key from supported ignored helper paths."""
+    search_paths = [
+        Path(__file__).parent / "FredAPI.txt",
+        Path(__file__).resolve().parent.parent / "API_Keys" / "FredAPI.txt",
+    ]
+    for path in search_paths:
+        if path.exists():
+            key = path.read_text(encoding="utf-8").strip()
+            if key:
+                return key
+    return None
+
+
 def _pad_start_window(start: str | None) -> str:
     """Return a slightly earlier start date to allow first lagged return."""
     if not start:
@@ -65,13 +79,12 @@ def load_fred_series(
 
     api_key = fred_api_key or os.environ.get("FRED_API_KEY")
     if not api_key:
-        local_key_file = Path(__file__).parent / "FredAPI.txt"
-        if local_key_file.exists():
-            api_key = local_key_file.read_text(encoding="utf-8").strip()
+        api_key = _read_optional_fred_key()
     if not api_key:
         raise ValueError(
             "Missing FRED API key. Pass fred_api_key, set FRED_API_KEY env var, "
-            "or create data/FredAPI.txt (gitignored local helper file)."
+            "or place one of the following files (gitignored local helper files): "
+            "data/FredAPI.txt or API_Keys/FredAPI.txt."
         )
 
     fred = Fred(api_key=api_key)
