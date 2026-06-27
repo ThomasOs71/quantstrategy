@@ -22,6 +22,15 @@ articles/Optimization_Lexicographic_2/outputs/
 # Powershell Scripts
 *.ps1
 planung/
-data/raw/msci/
+
+# Data and secrets: keep out of git
+data/raw/msci/*
+!data/raw/msci/README.md
 data/raw/fred_cache/
+data/FredAPI.txt
+*.env
+.env
+.env.*
+!.env.example
+API_Keys/
 *.parquet
