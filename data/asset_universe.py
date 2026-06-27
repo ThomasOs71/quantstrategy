@@ -115,14 +115,14 @@ ASSET_UNIVERSE: dict[str, AssetDefinition] = {
         display_name="Euro Govt Bond 7-10y",
         index_proxy="Bloomberg Euro Govt Bond 10 (via ETF proxy)",
         source=DataSource.YFINANCE,
-        source_id="IBCM.AS",
+        source_id="IBCM.DE",
         source_id_status="verified",
         history_start="2006-12",
         currency_treatment=CurrencyTreatment.EUR_NATIVE,
         is_portfolio_asset=True,
         notes=(
             "iShares Euro Government Bond 7-10yr UCITS ETF EUR (Dist), "
-            "ISIN IE00B1FZS806, Euronext Amsterdam. Proxy deviates from ICE BofA "
+            "ISIN IE00B1FZS806, Xetra. Proxy deviates from ICE BofA "
             "index methodology."
         ),
     ),
@@ -131,14 +131,14 @@ ASSET_UNIVERSE: dict[str, AssetDefinition] = {
         display_name="Euro IG Credit",
         index_proxy="iBoxx EUR Liquid Corporates Large Cap (via ETF proxy)",
         source=DataSource.YFINANCE,
-        source_id="IBCS.AS",
+        source_id="IBCS.DE",
         source_id_status="verified",
         history_start="2003-03",
         currency_treatment=CurrencyTreatment.EUR_NATIVE,
         is_portfolio_asset=True,
         notes=(
             "iShares Euro Corporate Bond Large Cap UCITS ETF, "
-            "ISIN IE0032523478, Euronext Amsterdam."
+            "ISIN IE0032523478, Xetra."
         ),
     ),
     "euro_high_yield": AssetDefinition(
@@ -146,7 +146,7 @@ ASSET_UNIVERSE: dict[str, AssetDefinition] = {
         display_name="Euro High Yield",
         index_proxy="iBoxx EUR Liquid High Yield (via ETF proxy)",
         source=DataSource.YFINANCE,
-        source_id="EUNW.AS",
+        source_id="EUNW.DE",
         source_id_status="verified",
         history_start="2010-09",  # binding constraint for COMMON_START
         currency_treatment=CurrencyTreatment.EUR_NATIVE,
