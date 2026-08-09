@@ -199,16 +199,16 @@ ASSET_UNIVERSE: dict[str, AssetDefinition] = {
     "gold": AssetDefinition(
         key="gold",
         display_name="Gold",
-        index_proxy="LBMA Gold Price PM Fix (USD)",
-        source=DataSource.FRED,
-        source_id="GOLDPMGBD228NLBM",
+        index_proxy="SPDR Gold Trust (GLD) proxy (USD)",
+        source=DataSource.YFINANCE,
+        source_id="GLD",
         source_id_status="verified",
         history_start="1968-04",
         currency_treatment=CurrencyTreatment.USD_VIA_EURUSD,
         is_portfolio_asset=True,
         notes=(
-            "LBMA PM Fix in USD/troy oz. FRED series GOLDPMGBD228NLBM. "
-            "Resample to month end and compute log returns, then convert via EUR/USD."
+            "Gold benchmark proxy via GLD ETF from yfinance. "
+            "Proxy is converted from USD to EUR via EUR/USD log convention."
         ),
     ),
     "commodities": AssetDefinition(

@@ -14,6 +14,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Local Codex workspace instructions
+AGENTS.md
+
 # Local generated article artifacts that are not source files
 articles/outputs/
 articles/Optimization_Lexicographic/output/sweep_weight_sensitivity_linkedin.png

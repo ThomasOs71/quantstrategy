@@ -221,22 +221,49 @@ def _parse_msci_rows(rows: Iterable[list[str]]) -> pd.DataFrame:
     return df.sort_values("date").drop_duplicates("date")
 
 
+def _resolve_msci_file(filename: str) -> Path:
+    """Resolve a requested MSCI file, accepting common alternate extensions."""
+    requested = MSCI_RAW_DIR / filename
+    if requested.exists():
+        return requested
+
+    stem = requested.stem
+    for extension in (".csv", ".xls", ".xlsx"):
+        candidate = MSCI_RAW_DIR / f"{stem}{extension}"
+        if candidate.exists():
+            return candidate
+
+    raise FileNotFoundError(
+        f"Missing MSCI file: {requested}\n"
+        "Place one of these files under data/raw/msci/:\n"
+        f"  - {stem}.csv\n  - {stem}.xls\n  - {stem}.xlsx\n"
+    )
+
+
+def _read_msci_rows_from_file(path: Path) -> list[list[str]]:
+    """Read raw date/value rows from MSCI CSV/XLS/XLSX file."""
+    if path.suffix.lower() == ".csv":
+        with path.open("r", encoding="utf-8", errors="ignore") as handle:
+            reader = csv.reader(handle)
+            return [list(row) for row in reader]
+
+    try:
+        frame = pd.read_excel(path, header=None)
+    except Exception as exc:
+        raise ValueError(
+            f"Could not parse MSCI file '{path}'. Export as plain CSV if parsing fails."
+        ) from exc
+    return frame.where(pd.notna(frame), None).values.tolist()
+
+
 def load_msci_csv(
     filename: str,
     start: str = COMMON_START,
 ) -> pd.Series:
     """Load monthly MSCI index CSVs exported from app2.msci.com."""
-    filepath = MSCI_RAW_DIR / filename
-    if not filepath.exists():
-        raise FileNotFoundError(
-            f"Missing MSCI file: {filepath}\n"
-            "Download this file manually and place it under data/raw/msci/. "
-            "Raw files are ignored in git and never checked in."
-        )
+    filepath = _resolve_msci_file(filename)
 
-    with filepath.open("r", encoding="utf-8", errors="ignore") as handle:
-        reader = csv.reader(handle)
-        rows = [row for row in reader]
+    rows = _read_msci_rows_from_file(filepath)
 
     frame = _parse_msci_rows(rows)
     frame["date"] = pd.to_datetime(frame["date"])

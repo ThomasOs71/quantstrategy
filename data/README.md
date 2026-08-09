@@ -37,3 +37,29 @@ panel = build_return_panel()
 print(panel.shape)
 PY
 ```
+
+## Target sample expectation (Block-1)
+
+For this repository, the expected full monthly panel target is:
+
+- 12 driver series (including `fx_eurusd`)
+- full coverage without gaps between:
+  - **2011-01-31** (inclusion start)
+  - **2025-12-31** (inclusion end)
+
+You can verify this quickly:
+
+```powershell
+python -c "from data.load_data import build_return_panel; p=build_return_panel(start='2010-01-01', end='2025-12-31'); complete=(~p.isna().any(axis=1)); c_idx=p.index[complete]; print(f'complete_rows={len(c_idx)}', f'first={c_idx.min().date()}', f'last={c_idx.max().date()}')"
+```
+
+Linux/macOS:
+
+```bash
+python -c "from data.load_data import build_return_panel; p=build_return_panel(start='2010-01-01', end='2025-12-31'); complete=(~p.isna().any(axis=1)); c_idx=p.index[complete]; print(f'complete_rows={len(c_idx)}', f'first={c_idx.min().date()}', f'last={c_idx.max().date()}')"
+```
+
+Interpretation:
+
+- If `first` is `2011-01-31` and `last` is `2025-12-31`, the target window is fully downloaded.
+- If `first` is later or `last` is earlier, at least one source series has missing coverage at either start or end.
