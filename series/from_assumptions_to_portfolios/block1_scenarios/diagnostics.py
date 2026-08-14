@@ -1,9 +1,21 @@
-"""Empirical diagnostics for Article 2 historical return building blocks."""
+"""Empirical diagnostics for Article 2 historical return building blocks.
+
+Ljung-Box tests joint zero *linear* autocorrelation through a selected lag;
+it is stronger than visually inspecting individual ACF bars, but neither a
+general independence test nor proof of i.i.d. on non-rejection.
+
+Schweizer-Wolff measures bivariate lagged dependence through the distance of
+the empirical copula from the independence copula. It can detect nonlinear
+dependence missed by Pearson correlation, but it does not test stationarity,
+identical distributions, or general process invariance.
+"""
 
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from scipy.stats import rankdata
+from statsmodels.stats.diagnostic import acorr_ljungbox
 
 
 def _validate_panel(panel: pd.DataFrame) -> None:
@@ -54,6 +66,308 @@ def squared_return_autocorrelation(panel: pd.DataFrame, lags: int = 12) -> pd.Da
         lags=lags,
         transform="squared_demeaned_return",
     )
+
+
+def ljung_box_diagnostics(
+    panel: pd.DataFrame,
+    lags: tuple[int, ...] = (6, 12),
+) -> pd.DataFrame:
+    """Calculate raw and squared-return Ljung–Box diagnostics by driver.
+
+    The result is a supplementary diagnostic table, not a multiple-testing
+    inference panel. Squared returns are demeaned before squaring, matching the
+    Article-2 volatility-persistence ACF diagnostic.
+    """
+    _validate_panel(panel)
+    if not lags or any(not isinstance(lag, int) or lag < 1 for lag in lags):
+        raise ValueError("lags must contain positive integers")
+    if max(lags) >= len(panel):
+        raise ValueError("lags must be smaller than the number of observations")
+
+    transforms = {
+        "raw_return": panel,
+        "squared_demeaned_return": panel.subtract(panel.mean(), axis="columns").pow(2),
+    }
+    records: list[dict[str, object]] = []
+    for transform, values in transforms.items():
+        for driver in values.columns:
+            result = acorr_ljungbox(values[driver], lags=list(lags), return_df=True)
+            for lag, row in result.iterrows():
+                records.append(
+                    {
+                        "driver": driver,
+                        "transform": transform,
+                        "lag": int(lag),
+                        "ljung_box_q": float(row["lb_stat"]),
+                        "p_value": float(row["lb_pvalue"]),
+                        "n_observations": len(values[driver]),
+                    }
+                )
+    return pd.DataFrame.from_records(records)
+
+
+def ljung_box_summary(panel: pd.DataFrame, lag: int = 12) -> pd.DataFrame:
+    """Return publication-facing Q(lag) Ljung-Box results with BH FDR control.
+
+    The Benjamini-Hochberg adjustment is applied separately to raw returns and
+    squared demeaned returns. Rejection is evidence of serial dependence of the
+    selected type through ``lag``; non-rejection does not establish i.i.d.
+    """
+    _validate_panel(panel)
+    if not isinstance(lag, int) or lag < 1 or lag >= len(panel):
+        raise ValueError("lag must be a positive integer smaller than the panel length")
+
+    transforms = {
+        "raw_return": panel,
+        "squared_demeaned_return": panel.subtract(panel.mean(), axis="columns").pow(2),
+    }
+    records: list[dict[str, object]] = []
+    for transform, values in transforms.items():
+        for driver in values.columns:
+            result = acorr_ljungbox(
+                values[driver],
+                lags=[lag],
+                model_df=0,
+                return_df=True,
+            ).iloc[0]
+            records.append(
+                {
+                    "driver": driver,
+                    "transform": transform,
+                    "lag": lag,
+                    "n_observations": len(values[driver]),
+                    "lb_stat": float(result["lb_stat"]),
+                    "lb_pvalue": float(result["lb_pvalue"]),
+                }
+            )
+
+    output = pd.DataFrame.from_records(records)
+    output["lb_pvalue_fdr"] = np.nan
+    for transform, indices in output.groupby("transform", sort=False).groups.items():
+        output.loc[indices, "lb_pvalue_fdr"] = benjamini_hochberg(
+            output.loc[indices, "lb_pvalue"].to_numpy()
+        )
+    output["reject_raw_5pct"] = output["lb_pvalue"] <= 0.05
+    output["reject_fdr_5pct"] = output["lb_pvalue_fdr"] <= 0.05
+    return output[
+        [
+            "driver",
+            "transform",
+            "lag",
+            "n_observations",
+            "lb_stat",
+            "lb_pvalue",
+            "lb_pvalue_fdr",
+            "reject_raw_5pct",
+            "reject_fdr_5pct",
+        ]
+    ]
+
+
+def benjamini_hochberg(pvalues: np.ndarray | list[float]) -> np.ndarray:
+    """Apply deterministic Benjamini-Hochberg FDR adjustment to finite p-values."""
+    values = np.asarray(pvalues, dtype=float)
+    if values.ndim != 1 or len(values) == 0:
+        raise ValueError("pvalues must be a non-empty one-dimensional array")
+    if not np.isfinite(values).all() or ((values < 0.0) | (values > 1.0)).any():
+        raise ValueError("pvalues must be finite values between zero and one")
+
+    order = np.argsort(values, kind="mergesort")
+    sorted_values = values[order]
+    adjusted_sorted = sorted_values * len(values) / np.arange(1, len(values) + 1)
+    adjusted_sorted = np.minimum.accumulate(adjusted_sorted[::-1])[::-1]
+    adjusted = np.empty_like(adjusted_sorted)
+    adjusted[order] = np.clip(adjusted_sorted, 0.0, 1.0)
+    return adjusted
+
+
+def schweizer_wolff_dependence(
+    x: np.ndarray | pd.Series,
+    y: np.ndarray | pd.Series,
+    grid_size: int = 100,
+) -> float:
+    """Estimate p=1 Schweizer-Wolff dependence from a regular empirical-copula grid."""
+    x_values, y_values = _validate_pair(x, y)
+    _validate_grid_size(grid_size)
+    return _schweizer_wolff_from_pseudo(
+        _pseudo_observations(x_values),
+        _pseudo_observations(y_values),
+        grid_size,
+    )
+
+
+def lagged_schweizer_wolff_diagnostics(
+    panel: pd.DataFrame,
+    max_lag: int = 12,
+    grid_size: int = 100,
+    n_permutations: int = 999,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Estimate lagged Schweizer-Wolff dependence with permutation references.
+
+    The permutation p-values are approximate independence references. They are
+    not time-series invariance or i.i.d. tests. BH FDR adjustment spans all
+    driver-lag comparisons (12 drivers x 12 lags for Article 2).
+    """
+    _validate_panel(panel)
+    if not isinstance(max_lag, int) or max_lag < 1 or max_lag >= len(panel):
+        raise ValueError("max_lag must be a positive integer smaller than the panel length")
+    _validate_grid_size(grid_size)
+    if not isinstance(n_permutations, int) or n_permutations < 1:
+        raise ValueError("n_permutations must be a positive integer")
+    if not isinstance(seed, int):
+        raise TypeError("seed must be an integer")
+
+    generator = np.random.default_rng(seed)
+    records: list[dict[str, object]] = []
+    for driver in panel.columns:
+        values = panel[driver].to_numpy(dtype=float)
+        for lag in range(1, max_lag + 1):
+            x_values = values[lag:]
+            y_values = values[:-lag]
+            observed, pvalue, q95 = _schweizer_wolff_permutation_reference(
+                x_values,
+                y_values,
+                grid_size=grid_size,
+                n_permutations=n_permutations,
+                generator=generator,
+            )
+            records.append(
+                {
+                    "driver": driver,
+                    "lag": lag,
+                    "n_observations": len(x_values),
+                    "sw_dependence": observed,
+                    "permutation_pvalue": pvalue,
+                    "permutation_q95": q95,
+                    "n_permutations": n_permutations,
+                    "seed": seed,
+                    "grid_size": grid_size,
+                }
+            )
+
+    output = pd.DataFrame.from_records(records)
+    output["permutation_pvalue_fdr"] = benjamini_hochberg(
+        output["permutation_pvalue"].to_numpy()
+    )
+    output["reject_raw_5pct"] = output["permutation_pvalue"] <= 0.05
+    output["reject_fdr_5pct"] = output["permutation_pvalue_fdr"] <= 0.05
+    return output[
+        [
+            "driver",
+            "lag",
+            "n_observations",
+            "sw_dependence",
+            "permutation_pvalue",
+            "permutation_pvalue_fdr",
+            "permutation_q95",
+            "reject_raw_5pct",
+            "reject_fdr_5pct",
+            "n_permutations",
+            "seed",
+            "grid_size",
+        ]
+    ]
+
+
+def schweizer_wolff_summary(lagged_results: pd.DataFrame) -> pd.DataFrame:
+    """Summarise the strongest lagged nonlinear-dependence evidence per driver."""
+    required = {
+        "driver",
+        "lag",
+        "sw_dependence",
+        "permutation_pvalue",
+        "permutation_pvalue_fdr",
+        "reject_raw_5pct",
+        "reject_fdr_5pct",
+    }
+    missing = required - set(lagged_results.columns)
+    if missing:
+        raise ValueError(f"lagged_results is missing required columns: {sorted(missing)}")
+
+    records: list[dict[str, object]] = []
+    for driver, group in lagged_results.groupby("driver", sort=False):
+        maximum = group.loc[group["sw_dependence"].idxmax()]
+        records.append(
+            {
+                "driver": driver,
+                "max_sw": float(maximum["sw_dependence"]),
+                "max_sw_lag": int(maximum["lag"]),
+                "min_permutation_pvalue": float(group["permutation_pvalue"].min()),
+                "min_fdr_pvalue": float(group["permutation_pvalue_fdr"].min()),
+                "n_lags_raw_significant": int(group["reject_raw_5pct"].sum()),
+                "n_lags_fdr_significant": int(group["reject_fdr_5pct"].sum()),
+            }
+        )
+    return pd.DataFrame.from_records(records)
+
+
+def _validate_pair(
+    x: np.ndarray | pd.Series,
+    y: np.ndarray | pd.Series,
+) -> tuple[np.ndarray, np.ndarray]:
+    x_values = np.asarray(x, dtype=float)
+    y_values = np.asarray(y, dtype=float)
+    if x_values.ndim != 1 or y_values.ndim != 1:
+        raise ValueError("x and y must be one-dimensional")
+    if len(x_values) != len(y_values) or len(x_values) < 2:
+        raise ValueError("x and y must have the same length of at least two")
+    if not np.isfinite(x_values).all() or not np.isfinite(y_values).all():
+        raise ValueError("x and y must contain only finite values")
+    return x_values, y_values
+
+
+def _validate_grid_size(grid_size: int) -> None:
+    if not isinstance(grid_size, int) or grid_size < 2:
+        raise ValueError("grid_size must be an integer of at least two")
+
+
+def _pseudo_observations(values: np.ndarray) -> np.ndarray:
+    return rankdata(values, method="average") / (len(values) + 1.0)
+
+
+def _schweizer_wolff_from_pseudo(
+    u_values: np.ndarray,
+    v_values: np.ndarray,
+    grid_size: int,
+) -> float:
+    """Evaluate the empirical-copula grid without looping over grid cells."""
+    grid = np.arange(1, grid_size + 1, dtype=float) / grid_size
+    # Assign an observation to the first grid cutoff that contains it. Using
+    # ``side="left"`` preserves the empirical-copula definition U <= u when a
+    # pseudo-observation lies exactly on a grid boundary.
+    u_bins = np.searchsorted(grid, u_values, side="left")
+    v_bins = np.searchsorted(grid, v_values, side="left")
+    counts = np.bincount(
+        u_bins * grid_size + v_bins,
+        minlength=grid_size * grid_size,
+    ).reshape(grid_size, grid_size)
+    empirical_copula = counts.cumsum(axis=0).cumsum(axis=1) / len(u_values)
+    independence_copula = np.multiply.outer(grid, grid)
+    return float(12.0 * np.mean(np.abs(empirical_copula - independence_copula)))
+
+
+def _schweizer_wolff_permutation_reference(
+    x: np.ndarray,
+    y: np.ndarray,
+    *,
+    grid_size: int,
+    n_permutations: int,
+    generator: np.random.Generator,
+) -> tuple[float, float, float]:
+    x_values, y_values = _validate_pair(x, y)
+    u_values = _pseudo_observations(x_values)
+    v_values = _pseudo_observations(y_values)
+    observed = _schweizer_wolff_from_pseudo(u_values, v_values, grid_size)
+    permuted = np.empty(n_permutations, dtype=float)
+    for iteration in range(n_permutations):
+        permuted[iteration] = _schweizer_wolff_from_pseudo(
+            u_values,
+            generator.permutation(v_values),
+            grid_size,
+        )
+    pvalue = (1.0 + float(np.count_nonzero(permuted >= observed))) / (n_permutations + 1.0)
+    return observed, pvalue, float(np.quantile(permuted, 0.95))
 
 
 def _autocorrelation_table(

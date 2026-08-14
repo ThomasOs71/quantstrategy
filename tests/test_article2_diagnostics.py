@@ -9,6 +9,7 @@ import pytest
 from series.from_assumptions_to_portfolios.block1_scenarios.diagnostics import (
     conditional_forward_return_summary,
     joint_tail_event_summary,
+    ljung_box_diagnostics,
     return_autocorrelation,
     squared_return_autocorrelation,
     tail_events,
@@ -35,6 +36,20 @@ def test_squared_return_autocorrelation_labels_its_transform() -> None:
     result = squared_return_autocorrelation(panel, lags=1)
     assert result.loc[0, "transform"] == "squared_demeaned_return"
     assert np.isfinite(result.loc[0, "autocorrelation"])
+
+
+def test_ljung_box_diagnostics_exports_requested_transforms_and_lags() -> None:
+    panel = _panel(
+        {
+            "a": [0.01 * value for value in range(1, 25)],
+            "b": [(-0.02) ** (value % 3 + 1) for value in range(1, 25)],
+        }
+    )
+    result = ljung_box_diagnostics(panel, lags=(6, 12))
+    assert len(result) == 2 * 2 * 2
+    assert set(result["transform"]) == {"raw_return", "squared_demeaned_return"}
+    assert set(result["lag"]) == {6, 12}
+    assert result["p_value"].between(0.0, 1.0).all()
 
 
 def test_tail_events_and_joint_tail_summary_find_shared_extreme_month() -> None:
