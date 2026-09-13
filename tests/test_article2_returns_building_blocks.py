@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from data.asset_universe import get_driver_keys
+import series.from_assumptions_to_portfolios.block1_scenarios.returns_building_blocks as article2_returns
 from series.from_assumptions_to_portfolios.block1_scenarios.returns_building_blocks import (
     ARTICLE2_END,
     ARTICLE2_START,
@@ -26,9 +27,11 @@ def _article2_panel() -> pd.DataFrame:
 
 def test_prepare_article2_panel_accepts_complete_expected_panel() -> None:
     panel = _article2_panel()
+    panel.attrs["source_profile"] = "monthly_legacy"
     result = prepare_article2_panel(panel)
     assert result.equals(panel)
     assert result.shape == (180, 12)
+    assert result.attrs["source_profile"] == "monthly_legacy"
 
 
 def test_validate_article2_panel_rejects_wrong_column_order() -> None:
@@ -52,8 +55,34 @@ def test_validate_article2_panel_rejects_nonfinite_return() -> None:
 
 
 def test_article2_panel_metadata_is_serializable_contract() -> None:
-    metadata = article2_panel_metadata(_article2_panel())
+    panel = _article2_panel()
+    panel.attrs.update(
+        {
+            "source_profile": "monthly_legacy",
+            "known_currency_mismatch": True,
+            "known_currency_mismatch_keys": ["em_equities", "commodities"],
+        }
+    )
+    metadata = article2_panel_metadata(panel)
     assert metadata["n_observations"] == 180
     assert metadata["n_drivers"] == 12
     assert metadata["start"] == "2011-01-31"
     assert metadata["return_representation"] == "EUR monthly log returns"
+    assert metadata["source_profile"] == "monthly_legacy"
+    assert metadata["known_currency_mismatch"] is True
+
+
+def test_article2_loader_explicitly_uses_monthly_legacy(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_build_return_panel(**kwargs):
+        captured.update(kwargs)
+        return _article2_panel()
+
+    monkeypatch.setattr(article2_returns, "build_return_panel", fake_build_return_panel)
+
+    result = article2_returns.load_article2_panel(fred_api_key="synthetic")
+
+    assert result.equals(_article2_panel())
+    assert captured["frequency"] == "monthly"
+    assert captured["source_profile"] == "monthly_legacy"

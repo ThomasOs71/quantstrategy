@@ -60,6 +60,7 @@ def plot_autocorrelation(
     title: str,
     subtitle: str,
     sample_size: int,
+    lag_unit: str = "months",
     footer: Mapping[str, str] | None = None,
 ):
     """Plot four ACF panels with common scale and a white-noise reference."""
@@ -86,13 +87,19 @@ def plot_autocorrelation(
             width=0.66,
             zorder=3,
         )
-        axis.axhline(reference, color=MUTED_GREY, linewidth=1.8, linestyle="--", zorder=2)
-        axis.axhline(-reference, color=MUTED_GREY, linewidth=1.8, linestyle="--", zorder=2)
+        axis.axhline(
+            reference, color=MUTED_GREY, linewidth=1.8, linestyle="--", zorder=2
+        )
+        axis.axhline(
+            -reference, color=MUTED_GREY, linewidth=1.8, linestyle="--", zorder=2
+        )
         style_axis(axis, zero_line=True)
         axis.set_ylim(-y_limit, y_limit)
-        axis.set_xlim(0.25, 12.75)
+        axis.set_xlim(0.25, float(selected["lag"].max()) + 0.75)
         axis.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=6))
-        axis.set_title(_label(driver), loc="left", fontsize=25, fontweight="semibold", pad=14)
+        axis.set_title(
+            _label(driver), loc="left", fontsize=25, fontweight="semibold", pad=14
+        )
     figure.text(
         0.94,
         0.895,
@@ -101,8 +108,24 @@ def plot_autocorrelation(
         fontsize=16,
         color=MUTED_GREY,
     )
-    figure.text(0.025, 0.50, "Autocorrelation", ha="center", va="center", rotation="vertical", fontsize=20, color=MUTED_GREY)
-    figure.text(0.5, 0.155, "Lag (months)", ha="center", fontsize=20, color=MUTED_GREY)
+    figure.text(
+        0.025,
+        0.50,
+        "Autocorrelation",
+        ha="center",
+        va="center",
+        rotation="vertical",
+        fontsize=20,
+        color=MUTED_GREY,
+    )
+    figure.text(
+        0.5,
+        0.155,
+        f"Lag ({lag_unit})",
+        ha="center",
+        fontsize=20,
+        color=MUTED_GREY,
+    )
     figure.subplots_adjust(left=0.11, right=0.96, top=0.84, bottom=0.19, hspace=0.58)
     add_empirical_footer(figure, **(footer or {}))
     return figure
@@ -112,6 +135,7 @@ def plot_rolling_volatility(
     rolling_volatility: pd.DataFrame,
     drivers: Sequence[str],
     *,
+    window_label: str = "12-month",
     footer: Mapping[str, str] | None = None,
 ):
     """Plot selected annualised rolling-volatility series with direct labels."""
@@ -119,11 +143,17 @@ def plot_rolling_volatility(
         raise ValueError("drivers must not be empty")
     missing = set(drivers) - set(rolling_volatility.columns)
     if missing:
-        raise ValueError(f"drivers absent from rolling volatility table: {sorted(missing)}")
+        raise ValueError(
+            f"drivers absent from rolling volatility table: {sorted(missing)}"
+        )
 
     colors = [COBALT, TEAL, CHARCOAL, PALE_BLUE]
     figure = create_figure()
-    add_title(figure, "Volatility is not constant through time", "12-month rolling annualized volatility")
+    add_title(
+        figure,
+        "Volatility is not constant through time",
+        f"{window_label} rolling annualized volatility",
+    )
     axis = figure.add_axes([0.11, 0.23, 0.70, 0.57])
     plotted = []
     for driver, color in zip(drivers, cycle(colors)):
@@ -134,7 +164,10 @@ def plot_rolling_volatility(
     axis.set_ylabel("Annualized volatility", fontsize=20, color=MUTED_GREY)
     axis.xaxis.set_major_locator(mdates.YearLocator(2))
     axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    axis.set_xlim(rolling_volatility.index.min(), rolling_volatility.index.max() + pd.DateOffset(months=10))
+    axis.set_xlim(
+        rolling_volatility.index.min(),
+        rolling_volatility.index.max() + pd.DateOffset(months=10),
+    )
     add_direct_labels(axis, plotted)
     add_empirical_footer(figure, **(footer or {}))
     return figure
@@ -143,6 +176,7 @@ def plot_rolling_volatility(
 def plot_rolling_correlation(
     rolling_correlation: pd.DataFrame,
     *,
+    window_label: str = "24-month",
     footer: Mapping[str, str] | None = None,
 ):
     """Plot the selected rolling correlations with direct labels."""
@@ -154,7 +188,7 @@ def plot_rolling_correlation(
     add_title(
         figure,
         "Cross-asset dependence changes through time",
-        "24-month rolling correlations with Global DM ex-EMU",
+        f"{window_label} rolling correlations with Global DM ex-EMU",
     )
     axis = figure.add_axes([0.11, 0.23, 0.70, 0.57])
     plotted = []
@@ -168,7 +202,10 @@ def plot_rolling_correlation(
     axis.set_ylabel("Correlation", fontsize=20, color=MUTED_GREY)
     axis.xaxis.set_major_locator(mdates.YearLocator(2))
     axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    axis.set_xlim(rolling_correlation.index.min(), rolling_correlation.index.max() + pd.DateOffset(months=14))
+    axis.set_xlim(
+        rolling_correlation.index.min(),
+        rolling_correlation.index.max() + pd.DateOffset(months=14),
+    )
     add_direct_labels(axis, plotted)
     add_empirical_footer(figure, **(footer or {}))
     return figure
@@ -177,6 +214,7 @@ def plot_rolling_correlation(
 def plot_joint_tail_event_timeline(
     joint_tail_events: pd.DataFrame,
     *,
+    period_label_plural: str = "Months",
     footer: Mapping[str, str] | None = None,
 ):
     """Plot simultaneous empirical lower-tail events as an ordered lollipop timeline."""
@@ -184,7 +222,8 @@ def plot_joint_tail_event_timeline(
     add_title(
         figure,
         "Tail events arrive as joint market events",
-        "Months in which multiple return series fall beneath their own empirical lower 5% threshold",
+        f"{period_label_plural} in which multiple return series fall beneath "
+        "their own empirical lower 5% threshold",
     )
     axis = figure.add_axes([0.11, 0.23, 0.80, 0.57])
     style_axis(axis)
@@ -196,9 +235,28 @@ def plot_joint_tail_event_timeline(
         events["date"] = pd.to_datetime(events["date"])
         events = events.sort_values("date")
         severe = events["tail_asset_count"] >= 5
-        axis.vlines(events["date"], 0, events["tail_asset_count"], color=LIGHT_GREY, linewidth=1.6, zorder=2)
-        axis.scatter(events.loc[~severe, "date"], events.loc[~severe, "tail_asset_count"], s=90, color=TEAL, zorder=3)
-        axis.scatter(events.loc[severe, "date"], events.loc[severe, "tail_asset_count"], s=120, color=COBALT, zorder=4)
+        axis.vlines(
+            events["date"],
+            0,
+            events["tail_asset_count"],
+            color=LIGHT_GREY,
+            linewidth=1.6,
+            zorder=2,
+        )
+        axis.scatter(
+            events.loc[~severe, "date"],
+            events.loc[~severe, "tail_asset_count"],
+            s=90,
+            color=TEAL,
+            zorder=3,
+        )
+        axis.scatter(
+            events.loc[severe, "date"],
+            events.loc[severe, "tail_asset_count"],
+            s=120,
+            color=COBALT,
+            zorder=4,
+        )
         annotations = {
             pd.Timestamp("2020-03-31"): "Mar 2020",
             pd.Timestamp("2022-04-30"): "Apr 2022",
@@ -208,10 +266,29 @@ def plot_joint_tail_event_timeline(
             match = events.loc[events["date"] == date]
             if not match.empty:
                 value = match["tail_asset_count"].iloc[0]
-                axis.annotate(label, (date, value), xytext=(0, 16), textcoords="offset points", ha="center", fontsize=17, color=CHARCOAL)
-        axis.set_xlim(events["date"].min() - pd.DateOffset(months=4), events["date"].max() + pd.DateOffset(months=4))
+                axis.annotate(
+                    label,
+                    (date, value),
+                    xytext=(0, 16),
+                    textcoords="offset points",
+                    ha="center",
+                    fontsize=17,
+                    color=CHARCOAL,
+                )
+        axis.set_xlim(
+            events["date"].min() - pd.DateOffset(months=4),
+            events["date"].max() + pd.DateOffset(months=4),
+        )
     else:
-        axis.text(0.5, 0.5, "No joint lower-tail events in the selected sample", transform=axis.transAxes, ha="center", color=MUTED_GREY, fontsize=20)
+        axis.text(
+            0.5,
+            0.5,
+            "No joint lower-tail events in the selected sample",
+            transform=axis.transAxes,
+            ha="center",
+            color=MUTED_GREY,
+            fontsize=20,
+        )
     axis.xaxis.set_major_locator(mdates.YearLocator(2))
     axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     add_empirical_footer(figure, **(footer or {}))
@@ -222,6 +299,8 @@ def plot_state_dependence(
     state_summary: pd.DataFrame,
     drivers: Sequence[str],
     *,
+    forward_horizon_label: str = "12-month",
+    state_window_label: str = "12-month",
     footer: Mapping[str, str] | None = None,
 ):
     """Plot descriptive forward returns by observed volatility bucket."""
@@ -242,7 +321,8 @@ def plot_state_dependence(
     add_title(
         figure,
         "Forward outcomes vary by volatility state",
-        "Average realised 12-month simple returns, by trailing Global DM ex-EMU volatility",
+        f"Average realised {forward_horizon_label} simple returns, by trailing "
+        f"{state_window_label} Global DM ex-EMU volatility",
     )
     figure.text(
         0.06,
@@ -254,20 +334,39 @@ def plot_state_dependence(
     axis = figure.add_axes([0.11, 0.25, 0.70, 0.54])
     plotted = []
     for driver, color in zip(drivers, cycle(colors)):
-        ordered = subset.loc[subset["driver"] == driver].set_index("state_bucket").reindex(buckets)
+        ordered = (
+            subset.loc[subset["driver"] == driver]
+            .set_index("state_bucket")
+            .reindex(buckets)
+        )
         series = ordered["mean_forward_return"].copy()
         series.index = np.arange(len(series))
-        axis.plot(series.index, series, color=color, linewidth=2.5, marker="o", markersize=8, zorder=3)
+        axis.plot(
+            series.index,
+            series,
+            color=color,
+            linewidth=2.5,
+            marker="o",
+            markersize=8,
+            zorder=3,
+        )
         plotted.append((_label(driver), series, color))
     style_axis(axis, percent=True, zero_line=True)
     axis.set_xlim(-0.15, 3.35)
     axis.set_xticks(range(3), bucket_labels)
-    axis.set_ylabel("Mean 12-month forward return", fontsize=20, color=MUTED_GREY)
+    axis.set_ylabel(
+        f"Mean {forward_horizon_label} forward return",
+        fontsize=20,
+        color=MUTED_GREY,
+    )
     add_direct_labels(axis, plotted)
     add_empirical_footer(
         figure,
         **(footer or {}),
-        note="Descriptive only; 12-month forward windows overlap and are not forecasts.",
+        note=(
+            f"Descriptive only; {forward_horizon_label} forward windows overlap "
+            "and are not forecasts."
+        ),
     )
     return figure
 
@@ -289,7 +388,9 @@ def _bucket_observations(state_summary: pd.DataFrame, bucket: str) -> int:
     if observations.empty:
         raise ValueError(f"missing observations for state bucket '{bucket}'")
     if observations.nunique() != 1:
-        raise ValueError("state buckets must have a common observation count across drivers")
+        raise ValueError(
+            "state buckets must have a common observation count across drivers"
+        )
     return int(observations.iloc[0])
 
 
@@ -306,8 +407,14 @@ def plot_scenario_architecture():
 
     def box(y, height, text, *, fill, edge=LIGHT_GREY, size=24, weight="medium"):
         patch = FancyBboxPatch(
-            (0.04, y), 0.92, height, boxstyle="round,pad=0.014,rounding_size=0.018",
-            linewidth=1.4, edgecolor=edge, facecolor=fill, transform=axis.transAxes,
+            (0.04, y),
+            0.92,
+            height,
+            boxstyle="round,pad=0.014,rounding_size=0.018",
+            linewidth=1.4,
+            edgecolor=edge,
+            facecolor=fill,
+            transform=axis.transAxes,
         )
         axis.add_patch(patch)
         axis.text(
@@ -338,8 +445,24 @@ def plot_scenario_architecture():
 
     # The y coordinates form a fixed vertical grid. Each arrow occupies only
     # the explicit gap between its source and target box.
-    box(0.910, 0.070, "HISTORICAL RETURN PANEL", fill=PALE_BLUE, edge=PALE_BLUE, size=29, weight="semibold")
-    axis.text(0.04, 0.860, "EMPIRICAL-FIRST", transform=axis.transAxes, fontsize=25, color=COBALT, fontweight="semibold")
+    box(
+        0.910,
+        0.070,
+        "HISTORICAL RETURN PANEL",
+        fill=PALE_BLUE,
+        edge=PALE_BLUE,
+        size=29,
+        weight="semibold",
+    )
+    axis.text(
+        0.04,
+        0.860,
+        "EMPIRICAL-FIRST",
+        transform=axis.transAxes,
+        fontsize=25,
+        color=COBALT,
+        fontweight="semibold",
+    )
     box(0.755, 0.075, "Observed market structure", fill=OFF_WHITE)
     arrow(0.745, 0.710)
     box(0.625, 0.075, "PRESERVE  /  CONDITION  /  FILTER", fill=OFF_WHITE)
@@ -352,13 +475,41 @@ def plot_scenario_architecture():
         edge=PALE_BLUE,
         size=20,
     )
-    axis.text(0.04, 0.400, "Preserves more observed market structure", transform=axis.transAxes, fontsize=18, color=MUTED_GREY)
-    axis.text(0.04, 0.360, "INVARIANCE-FIRST", transform=axis.transAxes, fontsize=25, color=TEAL, fontweight="semibold")
+    axis.text(
+        0.04,
+        0.400,
+        "Preserves more observed market structure",
+        transform=axis.transAxes,
+        fontsize=18,
+        color=MUTED_GREY,
+    )
+    axis.text(
+        0.04,
+        0.360,
+        "INVARIANCE-FIRST",
+        transform=axis.transAxes,
+        fontsize=25,
+        color=TEAL,
+        fontweight="semibold",
+    )
     box(0.280, 0.055, "Model conditional dynamics", fill=OFF_WHITE, size=21)
     arrow(0.270, 0.235)
-    box(0.170, 0.055, "Standardized, more invariant innovations", fill=OFF_WHITE, size=21)
+    box(
+        0.170,
+        0.055,
+        "Standardized, more invariant innovations",
+        fill=OFF_WHITE,
+        size=21,
+    )
     arrow(0.160, 0.125)
-    box(0.060, 0.055, "Model dependence / reconstruct scenarios", fill="#EAF8F8", edge=PALE_BLUE, size=21)
+    box(
+        0.060,
+        0.055,
+        "Model dependence / reconstruct scenarios",
+        fill="#EAF8F8",
+        edge=PALE_BLUE,
+        size=21,
+    )
     figure.text(
         0.5,
         0.022,

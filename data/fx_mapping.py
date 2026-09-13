@@ -37,6 +37,9 @@ def convert_usd_to_eur_returns(
     if r_fx.ndim != 2:
         raise ValueError("fx_returns_eurusd must be a 2D array (S, H)")
 
+    if r_usd.ndim < 2:
+        raise ValueError("asset_returns_usd must have at least two dimensions (S, H)")
+
     if r_fx.shape[0] != r_usd.shape[0] or r_fx.shape[1] != r_usd.shape[1]:
         raise ValueError(
             f"fx_returns_eurusd shape {r_fx.shape} must match first two dims of asset_returns_usd {r_usd.shape[:2]}"
@@ -48,14 +51,19 @@ def convert_usd_to_eur_returns(
     if not np.isfinite(r_fx).all():
         raise ValueError("fx_returns_eurusd must be finite")
 
+    fx_shape = r_fx.shape + (1,) * (r_usd.ndim - 2)
+    r_fx_broadcast = r_fx.reshape(fx_shape)
+
     if method == "log_additive":
         # log return convention + explicit convention for EUR strengthening: subtract.
-        return r_usd - r_fx
+        return r_usd - r_fx_broadcast
 
     # exact: convert to simple -> multiply with FX -> back to log.
     usd_simple = np.expm1(r_usd)
-    fx_simple = np.expm1(r_fx)
-    eur_simple = usd_simple / (1.0 + fx_simple)
+    fx_simple = np.expm1(r_fx_broadcast)
+    # Currency conversion applies to gross returns, including principal:
+    # (1 + r_EUR) = (1 + r_USD) / (1 + r_EURUSD).
+    eur_simple = (1.0 + usd_simple) / (1.0 + fx_simple) - 1.0
     return np.log1p(eur_simple)
 
 
@@ -64,8 +72,14 @@ def apply_fx_mapping(
     asset_index_map: Dict[str, int],
     fx_index: int,
     method: str = "log_additive",
+    input_currency_state: str = "native_mixed",
 ) -> np.ndarray:
-    """Apply USD conversion for the USD-exposed assets and drop the FX driver."""
+    """Map driver paths to assets and drop the FX driver.
+
+    ``native_mixed`` preserves the original scenario conversion. Use
+    ``eur_converted`` for paths estimated from either return-panel profile,
+    because those asset drivers are already expressed in EUR.
+    """
     drivers = np.asarray(driver_paths)
 
     if drivers.ndim != 3:
@@ -84,6 +98,11 @@ def apply_fx_mapping(
             f"asset_index_map must provide {N_ASSETS} assets, got {len(asset_index_map)}"
         )
 
+    if input_currency_state not in {"native_mixed", "eur_converted"}:
+        raise ValueError(
+            "input_currency_state must be 'native_mixed' or 'eur_converted'"
+        )
+
     fx_returns = drivers[:, :, fx_index]
     mapped_asset_paths = []
 
@@ -95,7 +114,10 @@ def apply_fx_mapping(
             raise ValueError(f"asset column index {column_index} out of bounds")
 
         path = drivers[:, :, column_index]
-        if asset_name in USD_EXPOSED_ASSETS:
+        if (
+            input_currency_state == "native_mixed"
+            and asset_name in USD_EXPOSED_ASSETS
+        ):
             path = convert_usd_to_eur_returns(
                 asset_returns_usd=path,
                 fx_returns_eurusd=fx_returns,

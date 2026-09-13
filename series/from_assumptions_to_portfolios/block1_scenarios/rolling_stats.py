@@ -31,7 +31,7 @@ def rolling_annualized_volatility(
     window: int = 12,
     periods_per_year: int = 12,
 ) -> pd.DataFrame:
-    """Compute rolling sample volatility annualised from monthly log returns."""
+    """Compute rolling sample volatility from periodic log returns."""
     _validate_panel(panel)
     _validate_window(window, len(panel))
     if periods_per_year < 1:
@@ -64,7 +64,7 @@ def rolling_pairwise_correlation(
 
 
 def trailing_compound_return(panel: pd.DataFrame, window: int = 12) -> pd.DataFrame:
-    """Compound trailing monthly log returns into trailing simple returns."""
+    """Compound trailing periodic log returns into trailing simple returns."""
     _validate_panel(panel)
     _validate_window(window, len(panel))
     return np.expm1(panel.rolling(window=window, min_periods=window).sum())
@@ -74,15 +74,20 @@ def trailing_state_features(
     panel: pd.DataFrame,
     anchor_driver: str,
     window: int = 12,
+    periods_per_year: int = 12,
 ) -> pd.DataFrame:
     """Create transparent trailing return and volatility features for diagnostics."""
     _validate_panel(panel)
     if anchor_driver not in panel.columns:
         raise ValueError(f"anchor_driver '{anchor_driver}' is not in panel")
-    trailing_return = trailing_compound_return(panel[[anchor_driver]], window)[anchor_driver]
-    trailing_volatility = rolling_annualized_volatility(panel[[anchor_driver]], window)[
+    trailing_return = trailing_compound_return(panel[[anchor_driver]], window)[
         anchor_driver
     ]
+    trailing_volatility = rolling_annualized_volatility(
+        panel[[anchor_driver]],
+        window,
+        periods_per_year=periods_per_year,
+    )[anchor_driver]
     return pd.DataFrame(
         {
             "trailing_return": trailing_return,

@@ -31,6 +31,8 @@ data/raw/msci/*
 !data/raw/msci/README.md
 data/raw/fred_cache/
 data/FredAPI.txt
+# Local provider-derived panel downloads and their provenance manifests
+/data/downloads/
 *.env
 .env
 .env.*

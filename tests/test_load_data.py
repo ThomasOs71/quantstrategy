@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+from types import SimpleNamespace
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -46,6 +48,27 @@ def test_cash_rate_conversion() -> None:
     assert abs(result.iloc[0] - 0.001998) < 1e-5
 
 
+def test_legacy_fred_error_does_not_expose_api_key(monkeypatch) -> None:
+    class FakeFred:
+        def __init__(self, api_key: str) -> None:
+            self.api_key = api_key
+
+        def get_series(self, *_args, **_kwargs):
+            raise RuntimeError(f"https://fred.example/?api_key={self.api_key}")
+
+    monkeypatch.setitem(sys.modules, "fredapi", SimpleNamespace(Fred=FakeFred))
+
+    with pytest.raises(RuntimeError, match="FRED request failed for DEXUSEU") as exc:
+        load_data.load_fred_series(
+            "DEXUSEU",
+            start="2020-01-01",
+            end="2020-01-31",
+            fred_api_key="TOP_SECRET",
+        )
+
+    assert "TOP_SECRET" not in str(exc.value)
+
+
 def test_asset_universe_counts() -> None:
     assert n_investable() == 11
     assert n_drivers() == 12
@@ -78,6 +101,29 @@ def test_msci_parser_skips_header_rows(tmp_path, monkeypatch) -> None:
     assert np.isclose(result.iloc[0], np.log(103.42 / 100.00))
 
 
+def test_msci_currency_audit_reads_header_and_rejects_conflicts(
+    tmp_path, monkeypatch
+) -> None:
+    test_dir = tmp_path / "msci"
+    test_dir.mkdir()
+    file_path = test_dir / "msci_emu_ntr_usd.csv"
+    file_path.write_text(
+        "Currency:,USD\nDate,Index Level\n2020-01-31,100",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(load_data, "MSCI_RAW_DIR", test_dir)
+
+    audit = load_data.inspect_msci_source_file("msci_emu_ntr_usd.csv")
+    assert audit["declared_currency"] == "USD"
+
+    file_path.write_text(
+        "Currency:,USD\nCurrency:,EUR\nDate,Index Level\n2020-01-31,100",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="conflicting currencies"):
+        load_data.inspect_msci_source_file("msci_emu_ntr_usd.csv")
+
+
 def _resolve_local_msci_file(base_name: str) -> Path:
     for ext in (".csv", ".xls", ".xlsx"):
         path = load_data.MSCI_RAW_DIR / f"{base_name}{ext}"
@@ -87,7 +133,7 @@ def _resolve_local_msci_file(base_name: str) -> Path:
 
 
 def test_msci_download_present_and_parseable() -> None:
-    """Check required local MSCI exports exist and can be parsed."""
+    """Check local MSCI exports exist, declare USD, and can be parsed."""
     if os.environ.get("BLOCK1_CHECK_RAW_DATA") != "1":
         pytest.skip(
             "Set BLOCK1_CHECK_RAW_DATA=1 to verify local MSCI downloads before running this test."
@@ -98,6 +144,12 @@ def test_msci_download_present_and_parseable() -> None:
         assert path.suffix.lower() in {".csv", ".xls", ".xlsx"}
         assert path.stat().st_size > 0
 
+        audit = load_data.inspect_msci_source_file(f"{base_name}.csv")
+        assert audit["declared_currency"] == "USD", (
+            f"{path.name} declares Currency={audit['declared_currency']!r}; "
+            "re-export the MSCI file in USD before treating it as a USD index."
+        )
+
         parsed = load_data.load_msci_csv(f"{base_name}.csv", start="2005-01")
         assert not parsed.empty
         assert parsed.index.is_monotonic_increasing
@@ -107,10 +159,8 @@ def test_msci_download_present_and_parseable() -> None:
 
 def test_return_panel_quality_smoke() -> None:
     """Build the return panel and run basic economic sanity checks."""
-    if os.environ.get("SKIP_DATA_QA") == "1":
-        pytest.skip(
-            "Set SKIP_DATA_QA=0 (or unset) to run the return-panel QA check."
-        )
+    if os.environ.get("BLOCK1_CHECK_LIVE_DATA") != "1":
+        pytest.skip("Set BLOCK1_CHECK_LIVE_DATA=1 to run network-dependent panel QA.")
 
     fred_key = load_data._read_optional_fred_key()
     if not fred_key and not os.environ.get("FRED_API_KEY"):

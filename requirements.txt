@@ -10,5 +10,6 @@ cvxpy>=1.6
 openpyxl>=3.1
 PyYAML>=6.0
 requests>=2.31
+fredapi>=0.5.1
 yfinance>=0.2.50
 lxml>=5.0
