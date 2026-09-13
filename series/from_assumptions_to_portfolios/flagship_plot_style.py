@@ -74,6 +74,8 @@ def add_empirical_footer(
     *,
     sample: str = "Jan 2011–Dec 2025",
     note: str | None = None,
+    frequency_label: str = "Monthly",
+    return_description: str = "EUR monthly log returns where applicable",
 ) -> None:
     """Add the required compact source, sample, and interpretation disclosure."""
     if note:
@@ -81,14 +83,14 @@ def add_empirical_footer(
     figure.text(
         0.06,
         0.082,
-        f"Sample: {sample}  |  Monthly  |  EUR investor perspective",
+        f"Sample: {sample}  |  {frequency_label}  |  EUR investor perspective",
         fontsize=18,
         color=MUTED_GREY,
     )
     figure.text(
         0.06,
         0.049,
-        "EUR monthly log returns where applicable",
+        return_description,
         fontsize=17,
         color=MUTED_GREY,
     )

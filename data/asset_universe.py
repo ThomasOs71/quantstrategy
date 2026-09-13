@@ -3,6 +3,10 @@
 Static registry of all modeled variables used by the scenario pipeline:
 - 11 investable assets
 - 1 FX driver (EUR/USD), not used directly for optimization
+
+``ASSET_UNIVERSE`` records the original monthly implementation and therefore
+must not be interpreted as corrected source-level currency metadata.  Corrected
+quote-currency and transformation contracts live in ``data.panel_profiles``.
 """
 
 from __future__ import annotations
@@ -50,11 +54,20 @@ class AssetDefinition:
     notes: str = ""
 
 
-# USD-priced assets that need EUR/USD log-return conversion
+# Historical scenario-mapping tuple retained for compatibility. It does not
+# describe the corrected quote currencies used by daily_proxy_2011.
 USD_EXPOSED_KEYS = (
     "global_dm_ex_emu",
     "em_equities",
     "gold",
+    "commodities",
+)
+
+
+KNOWN_LEGACY_CURRENCY_MISMATCH_KEYS = (
+    "euro_equities",
+    "global_dm_ex_emu",
+    "em_equities",
     "commodities",
 )
 
@@ -105,7 +118,8 @@ ASSET_UNIVERSE: dict[str, AssetDefinition] = {
         is_portfolio_asset=True,
         notes=(
             "iShares MSCI EM UCITS ETF (Dist), ISIN IE00B0M63177, Xetra. "
-            "USD-denominated ETF; convert to EUR via EUR/USD."
+            "The Xetra price series is EUR. The USD conversion is retained only "
+            "by monthly_legacy; daily_proxy_2011 uses an EUR accumulating proxy."
         ),
     ),
 
@@ -223,7 +237,8 @@ ASSET_UNIVERSE: dict[str, AssetDefinition] = {
         is_portfolio_asset=True,
         notes=(
             "iShares Diversified Commodity Swap UCITS ETF (DE), ISIN DE000A0H0728. "
-            "USD-denominated proxy converted via EUR/USD."
+            "The Xetra price series and Bloomberg Commodity Euro TR benchmark are "
+            "EUR. The USD conversion is retained only by monthly_legacy."
         ),
     ),
 

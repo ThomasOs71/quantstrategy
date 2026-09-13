@@ -12,6 +12,8 @@ identical distributions, or general process invariance.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
@@ -29,14 +31,25 @@ def _validate_panel(panel: pd.DataFrame) -> None:
         raise ValueError("panel must contain only finite values")
 
 
-def distribution_summary(panel: pd.DataFrame) -> pd.DataFrame:
-    """Summarise monthly log-return distributions by driver."""
+def distribution_summary(
+    panel: pd.DataFrame,
+    *,
+    periods_per_year: int = 12,
+    period_label: str = "monthly",
+) -> pd.DataFrame:
+    """Summarise periodic log-return distributions by driver."""
     _validate_panel(panel)
+    if not isinstance(periods_per_year, int) or periods_per_year < 1:
+        raise ValueError("periods_per_year must be a positive integer")
+    if not isinstance(period_label, str) or not period_label.isidentifier():
+        raise ValueError("period_label must be a valid identifier")
     summary = pd.DataFrame(
         {
-            "mean_monthly": panel.mean(),
-            "std_monthly": panel.std(ddof=1),
-            "annualized_volatility": panel.std(ddof=1) * np.sqrt(12.0),
+            f"mean_{period_label}": panel.mean(),
+            f"std_{period_label}": panel.std(ddof=1),
+            "annualized_mean_log": panel.mean() * periods_per_year,
+            "annualized_volatility": panel.std(ddof=1)
+            * np.sqrt(float(periods_per_year)),
             "skewness": panel.skew(),
             "excess_kurtosis": panel.kurt(),
             "minimum": panel.min(),
@@ -52,12 +65,18 @@ def distribution_summary(panel: pd.DataFrame) -> pd.DataFrame:
     return summary.reset_index()
 
 
-def return_autocorrelation(panel: pd.DataFrame, lags: int = 12) -> pd.DataFrame:
-    """Return lagged autocorrelations of raw monthly log returns in tidy form."""
+def return_autocorrelation(
+    panel: pd.DataFrame,
+    lags: int | Sequence[int] = 12,
+) -> pd.DataFrame:
+    """Return selected lagged autocorrelations of raw returns in tidy form."""
     return _autocorrelation_table(panel, lags=lags, transform="raw_return")
 
 
-def squared_return_autocorrelation(panel: pd.DataFrame, lags: int = 12) -> pd.DataFrame:
+def squared_return_autocorrelation(
+    panel: pd.DataFrame,
+    lags: int | Sequence[int] = 12,
+) -> pd.DataFrame:
     """Return autocorrelations of squared demeaned returns as a volatility proxy."""
     _validate_panel(panel)
     centered_squared = panel.subtract(panel.mean(), axis="columns").pow(2)
@@ -202,16 +221,20 @@ def lagged_schweizer_wolff_diagnostics(
     grid_size: int = 100,
     n_permutations: int = 999,
     seed: int = 42,
+    *,
+    lags: Sequence[int] | None = None,
 ) -> pd.DataFrame:
     """Estimate lagged Schweizer-Wolff dependence with permutation references.
 
     The permutation p-values are approximate independence references. They are
     not time-series invariance or i.i.d. tests. BH FDR adjustment spans all
-    driver-lag comparisons (12 drivers x 12 lags for Article 2).
+    driver-lag comparisons in the explicitly selected lag family.
     """
     _validate_panel(panel)
-    if not isinstance(max_lag, int) or max_lag < 1 or max_lag >= len(panel):
-        raise ValueError("max_lag must be a positive integer smaller than the panel length")
+    selected_lags = _normalize_lags(
+        max_lag if lags is None else lags,
+        n_observations=len(panel),
+    )
     _validate_grid_size(grid_size)
     if not isinstance(n_permutations, int) or n_permutations < 1:
         raise ValueError("n_permutations must be a positive integer")
@@ -222,7 +245,7 @@ def lagged_schweizer_wolff_diagnostics(
     records: list[dict[str, object]] = []
     for driver in panel.columns:
         values = panel[driver].to_numpy(dtype=float)
-        for lag in range(1, max_lag + 1):
+        for lag in selected_lags:
             x_values = values[lag:]
             y_values = values[:-lag]
             observed, pvalue, q95 = _schweizer_wolff_permutation_reference(
@@ -283,7 +306,9 @@ def schweizer_wolff_summary(lagged_results: pd.DataFrame) -> pd.DataFrame:
     }
     missing = required - set(lagged_results.columns)
     if missing:
-        raise ValueError(f"lagged_results is missing required columns: {sorted(missing)}")
+        raise ValueError(
+            f"lagged_results is missing required columns: {sorted(missing)}"
+        )
 
     records: list[dict[str, object]] = []
     for driver, group in lagged_results.groupby("driver", sort=False):
@@ -366,25 +391,24 @@ def _schweizer_wolff_permutation_reference(
             generator.permutation(v_values),
             grid_size,
         )
-    pvalue = (1.0 + float(np.count_nonzero(permuted >= observed))) / (n_permutations + 1.0)
+    pvalue = (1.0 + float(np.count_nonzero(permuted >= observed))) / (
+        n_permutations + 1.0
+    )
     return observed, pvalue, float(np.quantile(permuted, 0.95))
 
 
 def _autocorrelation_table(
     panel: pd.DataFrame,
-    lags: int,
+    lags: int | Sequence[int],
     transform: str,
 ) -> pd.DataFrame:
     _validate_panel(panel)
-    if not isinstance(lags, int) or lags < 1:
-        raise ValueError("lags must be a positive integer")
-    if lags >= len(panel):
-        raise ValueError("lags must be smaller than the number of observations")
+    selected_lags = _normalize_lags(lags, n_observations=len(panel))
 
     records: list[dict[str, object]] = []
     for driver in panel.columns:
         series = panel[driver]
-        for lag in range(1, lags + 1):
+        for lag in selected_lags:
             records.append(
                 {
                     "driver": driver,
@@ -395,6 +419,29 @@ def _autocorrelation_table(
                 }
             )
     return pd.DataFrame.from_records(records)
+
+
+def _normalize_lags(
+    lags: int | Sequence[int],
+    *,
+    n_observations: int,
+) -> tuple[int, ...]:
+    """Validate an inclusive maximum lag or an explicit ordered lag family."""
+    if isinstance(lags, int):
+        selected = tuple(range(1, lags + 1)) if lags >= 1 else ()
+    elif isinstance(lags, Sequence) and not isinstance(lags, (str, bytes)):
+        selected = tuple(lags)
+    else:
+        selected = ()
+    if (
+        not selected
+        or any(not isinstance(lag, int) or lag < 1 for lag in selected)
+        or tuple(sorted(set(selected))) != selected
+    ):
+        raise ValueError("lags must be positive, unique integers in ascending order")
+    if selected[-1] >= n_observations:
+        raise ValueError("lags must be smaller than the number of observations")
+    return selected
 
 
 def tail_thresholds(panel: pd.DataFrame, quantile: float = 0.05) -> pd.DataFrame:
@@ -436,7 +483,7 @@ def joint_tail_event_summary(
     quantile: float = 0.05,
     min_assets: int = 2,
 ) -> pd.DataFrame:
-    """Summarise months with simultaneous lower-tail events across drivers."""
+    """Summarise periods with simultaneous lower-tail events across drivers."""
     _validate_panel(panel)
     _validate_quantile(quantile)
     if not isinstance(min_assets, int) or min_assets < 1:
@@ -475,20 +522,52 @@ def conditional_forward_return_summary(
     following month, preventing the state observation from using future returns.
     The resulting observations overlap and are descriptive, not an inference test.
     """
+    if horizon_months < 1 or horizon_months >= len(panel):
+        raise ValueError("horizon_months must be between 1 and len(panel) - 1")
+    result = conditional_forward_period_return_summary(
+        panel,
+        state,
+        horizon_periods=horizon_months,
+        period_unit="months",
+        n_buckets=n_buckets,
+        state_name=state_name,
+    )
+    return result.rename(columns={"horizon_periods": "horizon_months"}).drop(
+        columns="period_unit"
+    )
+
+
+def conditional_forward_period_return_summary(
+    panel: pd.DataFrame,
+    state: pd.Series,
+    *,
+    horizon_periods: int,
+    period_unit: str,
+    n_buckets: int = 3,
+    state_name: str = "state",
+) -> pd.DataFrame:
+    """Describe following-period returns by a state observed at time ``t``.
+
+    The forward sum contains exactly ``t+1`` through ``t+horizon_periods``.
+    Full-sample state buckets make this a retrospective descriptive diagnostic,
+    not an operational no-look-ahead signal.
+    """
     _validate_panel(panel)
     if not isinstance(state, pd.Series):
         raise TypeError("state must be a pandas Series")
-    if horizon_months < 1 or horizon_months >= len(panel):
-        raise ValueError("horizon_months must be between 1 and len(panel) - 1")
+    if horizon_periods < 1 or horizon_periods >= len(panel):
+        raise ValueError("horizon_periods must be between 1 and len(panel) - 1")
+    if not isinstance(period_unit, str) or not period_unit:
+        raise ValueError("period_unit must be a non-empty string")
     if n_buckets < 2:
         raise ValueError("n_buckets must be at least 2")
 
     state = pd.to_numeric(state.reindex(panel.index), errors="coerce")
     future_log = (
         panel.shift(-1)
-        .rolling(window=horizon_months, min_periods=horizon_months)
+        .rolling(window=horizon_periods, min_periods=horizon_periods)
         .sum()
-        .shift(-(horizon_months - 1))
+        .shift(-(horizon_periods - 1))
     )
     future_simple = np.expm1(future_log)
     available = state.notna() & future_simple.notna().all(axis=1)
@@ -498,7 +577,9 @@ def conditional_forward_return_summary(
     try:
         buckets = pd.qcut(state.loc[available], q=n_buckets, duplicates="drop")
     except ValueError as exc:
-        raise ValueError("state values cannot be divided into distinct buckets") from exc
+        raise ValueError(
+            "state values cannot be divided into distinct buckets"
+        ) from exc
     if len(buckets.cat.categories) < 2:
         raise ValueError("state values must form at least two distinct buckets")
 
@@ -513,7 +594,8 @@ def conditional_forward_return_summary(
                     "state_name": state_name,
                     "state_bucket": str(bucket),
                     "driver": driver,
-                    "horizon_months": horizon_months,
+                    "horizon_periods": horizon_periods,
+                    "period_unit": period_unit,
                     "n_observations": int(len(series)),
                     "mean_forward_return": series.mean(),
                     "median_forward_return": series.median(),
