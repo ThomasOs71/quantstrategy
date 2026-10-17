@@ -2,6 +2,22 @@
 
 QuantStrategy is the code companion repository for the Substack flagship series *From Assumptions to Portfolios*, published at [quantstrategy.substack.com](https://quantstrategy.substack.com). The Substack also includes the no-code companion series *The Allocator's Toolkit*; because those practitioner articles are intentionally no-code, this repository does not maintain a separate Toolkit folder.
 
+## Article 3 reproduction release
+
+The implementation for [How Much History Should a Scenario Remember?](https://quantstrategy.substack.com/p/how-much-history-should-a-scenario)
+exports Figure A, Figures 1–6 and Tables 1/A1 from verified weekly research:
+
+```powershell
+python -m pip install -r requirements_article3_release.txt
+python -m series.from_assumptions_to_portfolios.block1_scenarios.run_article3_publication --build-missing
+```
+
+The verified local snapshot is required; no market observations or keys are
+included in Git. See the [fresh-clone setup and reproduction guide](docs/article3_reproduction_release.md)
+for input fingerprints, explicit data acquisition, run reuse, the local author
+bundle and the documented replacement selection for Figure 6. A provider-revised
+input is not silently presented as the published dataset.
+
 ## Quick Start (data + tests)
 
 - The local files under `data/raw/msci/` are required only by the frozen

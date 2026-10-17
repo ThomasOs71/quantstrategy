@@ -12,6 +12,16 @@
 | Block 4 | Post-processing, robustness checks, and decision preparation | Follows after Block 3 |
 | Block 5 | End-to-end workflow and publication-ready implementation | Follows after Block 4 |
 
+## Article 3 publication exports
+
+The [Article-3 reproduction release](../../docs/article3_reproduction_release.md)
+maps the published Figure A, Figures 1–6 and Tables 1/A1 to reproducible weekly
+research exports. Its entrypoint is
+`python -m series.from_assumptions_to_portfolios.block1_scenarios.run_article3_publication --build-missing`.
+It reuses matching full runs and explicitly labels the new Figure-6 selection.
+The verified frozen input is required; source data and author bundles remain
+outside Git.
+
 ## Toolkit Cross-Reference Convention
 
 Flaggschiff-Artikel verlinken so auf Toolkit:
