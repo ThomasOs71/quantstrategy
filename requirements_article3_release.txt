@@ -1,0 +1,17 @@
+# Python 3.11; direct dependencies from the verified numerical environment.
+# Provider revisions and platform/font differences are not frozen by this file.
+-r requirements_article3_research.txt
+numpy==1.26.4
+pandas==2.3.0
+scipy==1.15.2
+matplotlib==3.10.1
+statsmodels==0.14.4
+PyYAML==6.0.2
+scikit-learn==1.6.1
+cvxpy==1.6.5
+openpyxl==3.1.5
+requests==2.32.3
+fredapi==0.5.1
+yfinance==0.2.61
+lxml==6.0.2
+pytest==8.3.5

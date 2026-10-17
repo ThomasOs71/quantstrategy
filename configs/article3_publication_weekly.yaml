@@ -1,0 +1,8 @@
+# Published numerical target; no market observations or credentials.
+release_version: '1.0'
+article_url: https://quantstrategy.substack.com/p/how-much-history-should-a-scenario
+published_snapshot_sha256: f9be25192bdfb9ce403a4099ce1134d4a218bc68fa94807ea73fdd4da2c52d79
+published_canonical_panel_sha256: 19dec3047785021c9302518a08d908faac48ccf1c8af9574f5bdafc435662d20
+# A NEW, documented illustration selection, not the unknown original selection.
+figure6_selection_seed: [20260913, 401]
+figure6_n_paths: 100

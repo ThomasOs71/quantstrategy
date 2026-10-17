@@ -124,5 +124,20 @@ class ScenarioSet:
         return int(self.asset_paths.shape[0])
 
     @property
-    def horizon_months(self) -> int:
+    def horizon_steps(self) -> int:
+        """Number of return observations in each scenario path."""
         return int(self.asset_paths.shape[1])
+
+    @property
+    def horizon_months(self) -> int:
+        """Legacy monthly horizon accessor.
+
+        Weekly ScenarioSets carry explicit step metadata and must never report
+        their weekly path length as a number of months.
+        """
+        if self.metadata.get("frequency") == "weekly":
+            raise ValueError(
+                "Weekly ScenarioSets do not have horizon_months; use horizon_steps "
+                "and steps_per_year instead."
+            )
+        return self.horizon_steps
