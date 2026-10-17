@@ -53,7 +53,7 @@ def write_publication_handoff(
     repo = Path(__file__).resolve().parents[3]
     for relative in metadata["source_code_sha256"]:
         _copy(repo / relative, destination / "source_code" / relative)
-    for relative in ("README.md", "docs/article3_reproduction_release.md",
+    for relative in ("README.md", "pytest.ini", "docs/article3_reproduction_release.md",
                      "docs/article3_block_length_research.md", "docs/article3_set_a_implementation.md",
                      "requirements.txt", "requirements_article3_research.txt", "requirements_article3_release.txt"):
         _copy(repo / relative, destination / "reproduction" / relative)

@@ -107,6 +107,8 @@ def _lineage(data):
         axis.tick_params(labelsize=12)
         axis.set_title(LABELS[asset], loc="left", fontsize=13, pad=8)
         axis.set_xticks(range(1, 13))
+        if position < 2:
+            axis.tick_params(labelbottom=False)
         if position == 2:
             axis.set_xlabel("Weekly step in the newly joined path", fontsize=14)
     _footer(figure, "Within each block the sequence is historical; connections between blocks are newly constructed.")

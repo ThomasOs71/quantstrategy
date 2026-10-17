@@ -318,6 +318,13 @@ def run_article3_analysis(
         _append(collections, "acf_equal_horizon_reference", finite_path_acf_summary_rows(reference_scenario.driver_paths, keys, max_lag=config.acf_max_lag, transform=transform, historical_means=history_means, reference="reference_L04"), run_id=run_id, experiment="reference_L04", length=4, replicate_id=0)
     _append(collections, "rolling_diagnostic_summary", rolling_path_diagnostic_rows(reference_scenario.asset_paths, asset_keys, reference="reference_L04", vol_window=config.rolling_vol_steps, corr_window=config.rolling_corr_steps), run_id=run_id, experiment="reference_L04", length=4, replicate_id=0)
 
+    # Finish full-reference-only work before the sensitivity grid. Keeping the
+    # entire 10,000-path cube alive across all 35 grid runs needlessly increases
+    # memory pressure. Source indices suffice to reconstruct its exact prefix.
+    prefix = _reference_prefix_rows(reference_scenario.driver_paths, history=values, history_correlation=history_correlation,
+        thresholds=thresholds, keys=keys, asset_positions=asset_positions, asset_keys=asset_keys, config=config)
+    del reference_scenario, reference_analysis
+
     headlines: list[pd.DataFrame] = []
     for length in config.sensitivity_block_lengths:
         experiment = "synchronized_iid_L01" if length == 1 else f"synchronized_mbb_L{length:02d}"
@@ -325,7 +332,7 @@ def run_article3_analysis(
             if length == 4 and replicate_id == 0:
                 count = config.sensitivity_n_scenarios
                 sample = BlockSample(source_indices=reference_sample.source_indices[:count], block_starts=reference_sample.block_starts[:count], used_block_lengths=reference_sample.used_block_lengths)
-                paths = reference_scenario.driver_paths[:count]
+                paths = values[sample.source_indices, :]
                 if not np.array_equal(sample.source_indices, reference_sample.source_indices[:count]):
                     raise RuntimeError("reference prefix identity failed")
             else:
@@ -340,6 +347,8 @@ def run_article3_analysis(
                 mapped = {"marginal": "marginal_preservation", "occupancy": "source_occupancy", "edge": "edge_weighting_summary", "correlation_matrices": "correlation_matrices", "correlation_errors": "correlation_errors", "tail_cooccurrence": "tail_cooccurrence", "tail_pairwise": "tail_pairwise", "acf_curves": "acf_curves", "acf_errors": "acf_errors", "tail_sequence": "tail_sequence_dependence", "tradeoff": "block_length_tradeoff", "lag_pairs": "lag_pair_preservation", "diversity": "path_diversity", "terminal": "terminal_return_summary", "path_risk": "path_risk_summary"}[name]
                 _append(collections, mapped, frame, run_id=run_id, experiment=experiment, length=length, replicate_id=replicate_id)
             headlines.append(_variant_headlines(analysis, experiment=experiment, length=length, replicate_id=replicate_id))
+            del paths, sample, analysis
+        print(f"Set-A sensitivity L={length}: {config.sensitivity_replicates} replicates complete", flush=True)
 
     # Explicit negative control: it is not serialized as a production ScenarioSet.
     for replicate_id in range(config.control_replicates):
@@ -359,6 +368,7 @@ def run_article3_analysis(
             _append(collections, "correlation_errors", correlation_error_rows(control_corr[np.ix_(positions, positions)], history_correlation[np.ix_(positions, positions)], group_keys, experiment=experiment, block_length_steps=0, replicate_id=replicate_id, group=group), run_id=run_id, experiment=experiment, length=0, replicate_id=replicate_id)
         _append(collections, "tail_cooccurrence", tail_cooccurrence_rows(flattened, thresholds, keys, reference=reference), run_id=run_id, experiment=experiment, length=0, replicate_id=replicate_id)
         _append(collections, "tail_pairwise", tail_pairwise_rows(flattened, thresholds, keys, reference=reference), run_id=run_id, experiment=experiment, length=0, replicate_id=replicate_id)
+        del flattened, control_paths, row_indices
 
     # Matched historical rolling references for terminals and path risks.
     for label, horizon in dict(config.terminal_horizon_steps or {}).items():
@@ -380,8 +390,6 @@ def run_article3_analysis(
     if headlines:
         combined["monte_carlo_stability"] = monte_carlo_stability_rows(pd.concat(headlines, ignore_index=True))
         combined["monte_carlo_stability"].insert(0, "run_id", run_id)
-    prefix = _reference_prefix_rows(reference_scenario.driver_paths, history=values, history_correlation=history_correlation,
-        thresholds=thresholds, keys=keys, asset_positions=asset_positions, asset_keys=asset_keys, config=config)
     combined["reference_prefix_convergence"] = _tag(prefix, run_id=run_id, experiment="reference_L04", length=4, replicate_id=0)
 
     table_paths: dict[str, Path] = {}

@@ -84,6 +84,10 @@ The command reuses matching `FULL_COMPLETE` runs. If none exist, the explicit
 `--build-missing` flag first generates the full weekly Set-A run and then the
 block-length research. It performs no implicit downloads. Full generation is
 CPU- and memory-intensive; the saved reference archive alone is about 290 MB.
+Path-risk intermediates are evaluated in bounded scenario batches, retaining
+every per-path result before taking quantiles. The full reference cube is
+released before the sensitivity grid; its exact source-index prefix is reused.
+Scenario counts, random streams, formulas and quantile conventions are unchanged.
 
 The publication entrypoint does not require an Article-2 rerun. Its verified
 weekly-input contract is independent of that optional reconciliation. To check
@@ -184,6 +188,8 @@ tests, pass a fresh, nonexistent `--basetemp` path under ignored
 contents. Keep opt-in raw/licensed and network checks separate. The offline test
 suite selects the noninteractive Agg backend in `tests/conftest.py`; no Tk/Qt
 desktop installation is required. The publication CLI also renders headlessly.
+`pytest.ini` limits default collection to the canonical `tests/` directory, so
+ignored data, environments and local reproduction clones are not collected.
 
 An actual successful JUnit report can be attached to the final export:
 

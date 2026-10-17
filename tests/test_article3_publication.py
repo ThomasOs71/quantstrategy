@@ -365,3 +365,12 @@ def test_all_nine_exhibits_render_and_bundle_claim_references_resolve(tmp_path):
 
 def test_publication_bundle_requires_every_article_exhibit(tmp_path):
     with pytest.raises(ValueError, match="required exhibit"): build_publication_bundle(tmp_path)
+
+
+def test_lineage_panel_labels_do_not_overlap_repeated_x_tick_labels():
+    from series.from_assumptions_to_portfolios.block1_scenarios.article3_publication_plots import _lineage
+
+    figure = _lineage(lineage_plot_data(_lineage_fixture()))
+    assert not figure.axes[0].get_xticklabels() and not figure.axes[1].get_xticklabels()
+    assert len(figure.axes[2].get_xticklabels()) == 12
+    figure.clear()

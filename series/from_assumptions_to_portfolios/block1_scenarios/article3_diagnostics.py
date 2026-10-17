@@ -618,15 +618,22 @@ def terminal_summary_rows(
 
 def _path_risk_values(paths: np.ndarray, *, horizon_steps: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     prefix = _as_float_matrix(paths, ndim=3)[:, :horizon_steps, :]
-    log_wealth = np.cumsum(prefix, axis=1)
-    running_max = np.maximum.accumulate(np.concatenate([np.zeros((len(prefix), 1, prefix.shape[2])), log_wealth], axis=1), axis=1)[:, 1:, :]
-    mdd = np.max(-np.expm1(log_wealth - running_max), axis=1)
-    cumulative = np.concatenate([np.zeros((len(prefix), 1, prefix.shape[2])), log_wealth], axis=1)
-    def worst(window: int) -> np.ndarray:
-        if window > horizon_steps:
-            return np.full((len(prefix), prefix.shape[2]), np.nan)
-        return np.expm1(np.min(cumulative[:, window:, :] - cumulative[:, :-window, :], axis=1))
-    return mdd, worst(13), worst(52)
+    # Every path is independent at this stage. Bound temporary 3-D allocations,
+    # but retain ALL per-path observations before computing any quantile.
+    # This changes neither scenario counts nor the mean-of-run-quantiles estimand.
+    results = tuple(np.empty((len(prefix), prefix.shape[2]), dtype=np.float64) for _ in range(3))
+    for start in range(0, len(prefix), 256):
+        block = prefix[start:start + 256]
+        log_wealth = np.cumsum(block, axis=1)
+        cumulative = np.concatenate([np.zeros((len(block), 1, block.shape[2])), log_wealth], axis=1)
+        running_max = np.maximum.accumulate(cumulative, axis=1)[:, 1:, :]
+        results[0][start:start + len(block)] = np.max(-np.expm1(log_wealth - running_max), axis=1)
+        for output, window in zip(results[1:], (13, 52)):
+            output[start:start + len(block)] = (
+                np.nan if window > horizon_steps else
+                np.expm1(np.min(cumulative[:, window:, :] - cumulative[:, :-window, :], axis=1))
+            )
+    return results
 
 
 def path_risk_summary_rows(

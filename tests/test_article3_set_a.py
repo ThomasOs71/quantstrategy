@@ -11,6 +11,7 @@ import pytest
 
 from data.asset_universe import get_asset_keys, get_driver_keys
 from series.from_assumptions_to_portfolios.block1_scenarios.article3_diagnostics import (
+    _path_risk_values,
     ensemble_acf,
     expected_source_weights,
     path_risk_summary_rows,
@@ -59,6 +60,32 @@ def _provenance() -> WeeklyInputProvenance:
     manifest = {"source_profile": "daily_proxy_2011", "frequency_option": "weekly", "rows": 782,
                 "columns": 12, "driver_keys": get_driver_keys()}
     return WeeklyInputProvenance(Path("input.csv"), Path("input.manifest.json"), "a" * 64, "b" * 64, "c" * 64, None, "not_checked", manifest)
+
+
+@pytest.mark.parametrize("horizon", [1, 13, 52, 60])
+def test_bounded_path_risk_matches_full_array_oracle_for_every_path(horizon, monkeypatch):
+    # SYNTHETIC fixture spans two complete 256-path batches and a final singleton.
+    paths = np.random.default_rng(1701).normal(.001, .03, (513, 60, 3))
+    prefix = paths[:, :horizon]
+    wealth = np.cumsum(prefix, axis=1)
+    cumulative = np.concatenate([np.zeros((len(paths), 1, 3)), wealth], axis=1)
+    peaks = np.maximum.accumulate(cumulative, axis=1)[:, 1:]
+    expected = [np.max(-np.expm1(wealth - peaks), axis=1)]
+    for window in (13, 52):
+        expected.append(np.full((len(paths), 3), np.nan) if window > horizon else
+                        np.expm1(np.min(cumulative[:, window:] - cumulative[:, :-window], axis=1)))
+    calls = []
+    original_cumsum = np.cumsum
+
+    def tracked_cumsum(values, *args, **kwargs):
+        calls.append(values.shape[0])
+        return original_cumsum(values, *args, **kwargs)
+
+    monkeypatch.setattr(np, "cumsum", tracked_cumsum)
+    actual = _path_risk_values(paths, horizon_steps=horizon)
+    assert calls == [256, 256, 1]
+    for observed, reference in zip(actual, expected):
+        np.testing.assert_allclose(observed, reference, rtol=0, atol=1e-14, equal_nan=True)
 
 
 def test_mbb_indices_are_synchronized_non_circular_and_reproducible() -> None:
