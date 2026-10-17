@@ -1,0 +1,30 @@
+spec_version: '2.0'
+root_seed: 20260913
+frequency: weekly
+sampling: W-FRI
+steps_per_year: 52
+horizon_steps: 260
+terminal_horizon_steps: {12m: 52, 36m: 156, 60m: 260}
+method: moving_block_bootstrap
+block_length_steps: 4
+block_length_status: provisional_reference_not_optimal
+with_replacement: true
+overlapping: true
+circular: false
+production_n_scenarios: 10000
+sensitivity_block_lengths: [1, 2, 4, 8, 13, 26, 52]
+sensitivity_n_scenarios: 3000
+sensitivity_replicates: 5
+control_n_scenarios: 3000
+control_replicates: 5
+smoke_n_scenarios: 64
+path_dtype: float64
+summary_dtype: float64
+acf_max_lag: 52
+acf_error_lag_sets: [4, 13, 52]
+rolling_vol_steps: 52
+rolling_corr_steps: 104
+lower_tail_probability: 0.05
+tail_quantile_method: linear
+tail_comparison: lt
+summary_quantile_method: linear

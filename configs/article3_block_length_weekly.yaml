@@ -1,0 +1,12 @@
+# Additive diagnostics. The original Set-A configuration is not changed.
+spec_version: '1.0'
+root_seed: 20260913
+outer_mean_block_lengths: [13, 26, 52]
+outer_resamples: 999
+outer_confidence: 0.95
+uncertainty_acf_max_lag: 13
+ljung_box_lags: [4, 13, 52]
+ljung_box_alpha: 0.05
+contrasts: [[4, 1], [4, 8], [4, 13]]
+synthetic_calendar_start: '2026-01-02'
+smoke_outer_resamples: 19
